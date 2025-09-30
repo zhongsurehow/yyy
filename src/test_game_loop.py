@@ -5,6 +5,7 @@ from unittest.mock import patch
 from src.game import Game
 from src.player import Player
 from src.card import Card
+from src.phases import time_phase, resolution_phase
 
 class TestGameLoop(unittest.TestCase):
 
@@ -49,7 +50,7 @@ class TestGameLoop(unittest.TestCase):
         self.game.game_state.celestial_stem_deck.append(stem_card)
         self.game.game_state.terrestrial_branch_deck.append(branch_card)
 
-        self.game._execute_time_phase()
+        time_phase.execute(self.game.game_state, self.game)
 
         li_tian_zone = self.game.game_state.game_board.get_zone("li_tian")
         kan_di_zone = self.game.game_state.game_board.get_zone("kan_di")
@@ -64,7 +65,7 @@ class TestGameLoop(unittest.TestCase):
         initial_alice_gold = self.alice.gold
         initial_bob_gold = self.bob.gold
 
-        self.game._execute_resolution_phase()
+        resolution_phase.execute(self.game)
 
         # Assertions for Resolution Phase logic
         self.assertEqual(self.alice.gold, initial_alice_gold + li_tian_zone.gold_reward)

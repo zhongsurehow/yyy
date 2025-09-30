@@ -366,7 +366,7 @@
                 "action": "GAIN_RESOURCE",
                 "params": {
                   "target": "SELF",
-                  "resource": "YIN_YANG_GAUGE",
+                  "resource": "yin_yang",
                   "value": 2
                 }
               }
@@ -553,7 +553,7 @@
                 "action": "SET_RESOURCE",
                 "params": {
                   "target": "SELF",
-                  "resource": "YIN_YANG_GAUGE",
+                  "resource": "yin_yang",
                   "value": 0
                 }
               }
@@ -4163,7 +4163,7 @@
                 "params": {
                   "target_a": "SELF",
                   "target_b": "OPPONENT_CHOICE_SINGLE",
-                  "resource": "YIN_YANG_GAUGE",
+                  "resource": "yin_yang",
                   "atomic": true
                 }
               }

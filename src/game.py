@@ -11,6 +11,14 @@ from .card import Card
 from .effect_engine import EffectEngine
 from . import five_elements as fe
 from . import qimen as qm
+from .phases import (
+    time_phase,
+    placement_phase,
+    movement_phase,
+    interpretation_phase,
+    resolution_phase,
+    upkeep_phase,
+)
 
 # Setup a dedicated logger for the game's narrative story
 story_logger = logging.getLogger("story_logger")
@@ -87,19 +95,54 @@ class Game:
 
         story_logger.info("Game setup is complete. Players and cards are ready.")
 
-    def run_game(self, num_rounds: int = 1):
+    def run_game(self, num_rounds: int = 10):
         """Runs the main game loop for a specified number of rounds."""
-        story_logger.info(f"\n--- Starting Game Simulation ({num_rounds} round(s)) ---")
+        story_logger.info(f"\n--- Starting Game Simulation (up to {num_rounds} rounds) ---")
         logging.info(f"--- Starting Game Run ({num_rounds} round(s)) ---")
 
+        winner = None
         for i in range(1, num_rounds + 1):
             self.run_round(i)
 
+            winner = self._check_for_winner(i, num_rounds)
+            if winner:
+                break
+
+        if not winner:
+             winner = self._check_for_winner(num_rounds, num_rounds)
+
         story_logger.info("\n--- Simulation Finished ---")
+        if not winner and len(self.active_players) > 1:
+            story_logger.info("The game ended in a draw based on the rules.")
+
         story_logger.info("Final Player States:")
         for player in self.game_state.players:
             story_logger.info(f"  - {player}")
         logging.info("--- Game Run Finished ---")
+
+    def _check_for_winner(self, current_round: int, max_rounds: int) -> Player | None:
+        """Checks for victory conditions and returns the winner if one is found."""
+        if len(self.active_players) == 1:
+            winner = self.active_players[0]
+            story_logger.info(f"\n!!! VICTORY: {winner.name} is the last player standing! !!!")
+            return winner
+
+        if len(self.active_players) == 0:
+            story_logger.info("\n!!! DRAW: All players have been eliminated. !!!")
+            return None
+
+        if current_round >= max_rounds:
+            story_logger.info(f"\n--- Game has reached the round limit of {max_rounds}. Calculating winner by wealth... ---")
+            potential_winners = sorted(self.active_players, key=lambda p: (p.gold, p.health), reverse=True)
+            if not potential_winners:
+                 story_logger.info("\n!!! DRAW: No active players left to determine a winner. !!!")
+                 return None
+            winner = potential_winners[0]
+            story_logger.info(f"  - {winner.name} has the most wealth (Gold: {winner.gold}, Health: {winner.health}).")
+            story_logger.info(f"\n!!! VICTORY: {winner.name} wins by having the most wealth! !!!")
+            return winner
+
+        return None
 
     def run_round(self, round_number: int):
         """Executes all phases for a single round of the game."""
@@ -110,211 +153,46 @@ class Game:
         self.game_state.current_turn = round_number
         story_logger.info(f"\n***** Round {self.game_state.current_turn} *****")
 
-        self._execute_time_phase()
-        self._execute_placement_phase()
-        self._execute_movement_phase()
-        self._execute_interpretation_phase()
-        self._execute_resolution_phase()
-        self._execute_upkeep_phase()
+        self._resolve_delayed_effects("NEXT_TURN_START")
 
-    def _execute_time_phase(self):
-        self.game_state.set_phase("TIME")
-        dun_type = self.game_state.dun_type
-        dun_text = "Yang" if dun_type == "YANG" else "Yin"
-        solar_term_name = self.game_state.current_solar_term.name
-        ju_number = qm.get_ju_number_for_solar_term(self.game_state.solar_term_index, dun_type)
+        phases = [
+            ("TIME", lambda: time_phase.execute(self.game_state, self)),
+            ("PLACEMENT", lambda: placement_phase.execute(self.game_state)),
+            ("MOVEMENT", lambda: movement_phase.execute(self)),
+            ("INTERPRETATION", lambda: interpretation_phase.execute(self)),
+            ("RESOLUTION", lambda: resolution_phase.execute(self)),
+            ("UPKEEP", lambda: upkeep_phase.execute(self)),
+        ]
 
-        story_logger.info(f"\n--- Time Phase ---")
-        story_logger.info(f"The celestial energies shift. It is now the '{solar_term_name}' solar term.")
-        story_logger.info(f"This is a {dun_text} Dun period, corresponding to Ju {ju_number}.")
-        logging.info(f"当前节气: {solar_term_name} ({dun_text}遁), 第{ju_number}局")
-
-        self._update_qimen_gates()
-
-        if self.game_state.current_celestial_stem:
-            logging.info(f"弃置天干牌: {self.game_state.current_celestial_stem.name}")
-            self.game_state.celestial_stem_discard_pile.append(self.game_state.current_celestial_stem)
-        if self.game_state.current_terrestrial_branch:
-            logging.info(f"弃置地支牌: {self.game_state.current_terrestrial_branch.name}")
-            self.game_state.terrestrial_branch_discard_pile.append(self.game_state.current_terrestrial_branch)
-
-        self._reshuffle_if_needed('celestial_stem')
-        self._reshuffle_if_needed('terrestrial_branch')
-
-        if not self.game_state.celestial_stem_deck or not self.game_state.terrestrial_branch_deck:
-            logging.error("Critical: Cannot draw new time cards. Decks are empty.")
-            return
-
-        self.game_state.current_celestial_stem = self.game_state.celestial_stem_deck.pop()
-        self.game_state.current_terrestrial_branch = self.game_state.terrestrial_branch_deck.pop()
-        story_logger.info(f"The new time cards are '{self.game_state.current_celestial_stem.name}' and '{self.game_state.current_terrestrial_branch.name}'.")
-
-        stem_element = fe.get_element_for_stem(self.game_state.current_celestial_stem.card_id.split('_')[-1])
-        branch_element = fe.get_element_for_branch(self.game_state.current_terrestrial_branch.card_id.split('_')[-1])
-
-        beneficial_elements = {fe.get_generated_element(stem_element), fe.get_generated_element(branch_element)}
-        harmful_elements = {fe.get_overcome_element(stem_element), fe.get_overcome_element(branch_element)}
-        story_logger.info(f"This makes {beneficial_elements} beneficial and {harmful_elements} harmful this round.")
-
-        for zone in self.game_state.game_board.zones.values():
-            zone.gold_reward = 0
-            zone.gold_penalty = 0
-            is_beneficial = zone.five_element in beneficial_elements
-            is_harmful = zone.five_element in harmful_elements
-            if zone.department == 'tian':
-                if is_beneficial: zone.gold_reward += 5
-                if is_harmful: zone.gold_reward = 0
-            elif zone.department == 'di':
-                if is_beneficial: zone.gold_penalty -= 3
-                if is_harmful: zone.gold_penalty += 5
-                zone.gold_penalty = max(0, zone.gold_penalty)
-
-    def _choose_best_card_to_play(self, player: Player) -> Card | None:
-        """A simple AI to choose a card to play based on the player's situation."""
-        basic_cards = [c for c in player.hand if c.card_type == 'basic']
-        if not basic_cards:
-            return None
-
-        # Heuristic: choose the card with the fewest strokes, as it's good for duels.
-        best_card = min(basic_cards, key=lambda card: card.strokes)
-
-        story_logger.info(f"  - {player.name} thinks about which card to play...")
-        story_logger.info(f"  - They choose '{best_card.name}' because its low stroke count ({best_card.strokes}) is advantageous in duels (Lun Dao).")
-
-        return best_card
-
-    def _execute_placement_phase(self):
-        self.game_state.set_phase("PLACEMENT")
-        story_logger.info("\n--- Placement Phase ---")
-        story_logger.info("Players decide which card to commit to this round's interpretation.")
-
-        for player in self.active_players:
-            card_to_play = self._choose_best_card_to_play(player)
-
-            if card_to_play:
-                player.play_card(card_to_play.card_id)
-                story_logger.info(f"  - {player.name} places '{card_to_play.name}' face down.")
-                logging.info(f"{player.name} 放置卡牌: {card_to_play.name} (面朝下)")
-            else:
-                story_logger.info(f"  - {player.name} has no basic cards to play this turn.")
-                logging.info(f"{player.name} 没有基本卡牌可放置")
-
-    def _choose_best_move(self, player: Player, valid_moves: List[str]) -> str:
-        """A simple AI to choose the best move for a player."""
-        move_scores = {}
-
-        story_logger.info(f"  - {player.name} (at {player.position}) considers where to move.")
-
-        for move in valid_moves:
-            score = 0
-            zone = self.game_state.game_board.get_zone(move)
-            palace = self.game_state.game_board.get_palace_for_zone(move)
-            gate_name = self.game_state.game_board.qimen_gates.get(palace)
-            gate_info = qm.GATE_EFFECTS.get(gate_name, {})
-            reasoning = []
-
-            if zone.department == 'tian':
-                if zone.gold_reward > 0:
-                    score += 5
-                    reasoning.append(f"it's in the Tian department with a {zone.gold_reward} gold reward")
-                else:
-                    score -= 3
-                    reasoning.append("it's a stagnant Tian zone")
-            elif zone.department == 'di':
-                if zone.gold_penalty > 0:
-                    score -= 5
-                    reasoning.append(f"it's in the Di department with a {zone.gold_penalty} gold penalty")
-                else:
-                    score += 3
-                    reasoning.append("it's a Di zone with no penalty")
-
-            if gate_info.get("type") == "Auspicious":
-                score += 10
-                reasoning.append(f"it has the auspicious '{gate_info.get('name')}' gate")
-            elif gate_info.get("type") == "Inauspicious":
-                score -= 10
-                reasoning.append(f"it has the inauspicious '{gate_info.get('name')}' gate")
-
-            other_players = [p for p in self.active_players if p.position == move]
-            if other_players:
-                score -= 7 # Avoid conflict for this simple AI
-                reasoning.append(f"it is occupied by {other_players[0].name}")
-
-            move_scores[move] = score
-            if reasoning:
-                story_logger.info(f"    - Considering {move}: {', '.join(reasoning)}. (Score: {score})")
-
-        if not move_scores:
-            return random.choice(valid_moves)
-
-        best_move = max(move_scores, key=move_scores.get)
-        story_logger.info(f"  - After weighing the options, {player.name} decides to move to {best_move}.")
-        return best_move
-
-    def _execute_movement_phase(self):
-        self.game_state.set_phase("MOVEMENT")
-        story_logger.info("\n--- Movement Phase ---")
-        story_logger.info("Players move across the board, triggering events.")
-
-        for player in self.active_players:
-            valid_moves = self.game_state.game_board.get_valid_moves(player.position)
-            if not valid_moves:
-                story_logger.info(f"  - {player.name} is at {player.position} and has no valid moves.")
+        for phase_name, phase_method in phases:
+            if phase_name.upper() in self.game_state.skipped_phases:
+                story_logger.info(f"\n--- Skipping {phase_name} Phase (Effect active) ---")
                 continue
+            phase_method()
 
-            destination = self._choose_best_move(player, valid_moves)
-            original_position = player.position
-            player.position = destination
-            story_logger.info(f"  - {player.name} moves from {original_position} to {destination}.")
+    def _resolve_delayed_effects(self, trigger_moment: str):
+        """Resolves any delayed effects that match the current game moment."""
+        story_logger.info(f"--- Checking for delayed effects at {trigger_moment} ---")
 
-            other_players_in_zone = [p for p in self.active_players if p.position == destination and p.player_id != player.player_id]
-            if other_players_in_zone:
-                defender = other_players_in_zone[0]
-                story_logger.info(f"  - This triggers a 'Lun Dao' (duel) with {defender.name}!")
-                self._trigger_lun_dao(player, defender)
+        effects_to_trigger = [
+            item for item in self.game_state.delayed_effects
+            if item.get("delay") == trigger_moment
+        ]
 
-        self._trigger_gate_effects()
+        for item in effects_to_trigger:
+            self.game_state.delayed_effects.remove(item)
 
-    def _trigger_lun_dao(self, challenger: Player, defender: Player):
-        story_logger.info(f"--- Lun Dao Duel: {challenger.name} vs {defender.name} ---")
-
-        challenger_cards = [c for c in challenger.hand if c.card_type == 'basic']
-        defender_cards = [c for c in defender.hand if c.card_type == 'basic']
-
-        if not challenger_cards or not defender_cards:
-            story_logger.info("  - The duel cannot proceed as one or both players lack basic cards.")
+        if not effects_to_trigger:
             return
 
-        challenger_card = min(challenger_cards, key=lambda c: c.strokes)
-        defender_card = min(defender_cards, key=lambda c: c.strokes)
+        story_logger.info(f"  - Triggering {len(effects_to_trigger)} delayed effect(s).")
+        for item in effects_to_trigger:
+            self.effect_engine.queue_effect(item["effect"], item["source_player"])
 
-        story_logger.info(f"  - {challenger.name} reveals '{challenger_card.name}' ({challenger_card.strokes} strokes).")
-        story_logger.info(f"  - {defender.name} reveals '{defender_card.name}' ({defender_card.strokes} strokes).")
-
-        winner, loser = (None, None)
-        if challenger_card.strokes < defender_card.strokes:
-            winner, loser = challenger, defender
-            story_logger.info(f"  - With fewer strokes, {challenger.name} wins the duel!")
-        elif defender_card.strokes < challenger_card.strokes:
-            winner, loser = defender, challenger
-            story_logger.info(f"  - With fewer strokes, {defender.name} wins the duel!")
-        else:
-            story_logger.info("  - The strokes are equal, resulting in a draw!")
-
-        if winner:
-            amount = min(loser.gold, 5)
-            loser.change_resource("gold", -amount)
-            winner.change_resource("gold", amount)
-            story_logger.info(f"  - {winner.name} takes {amount} gold from {loser.name}.")
-            self._check_player_elimination(loser)
-
-        challenger.hand.remove(challenger_card)
-        self.game_state.basic_discard_pile.append(challenger_card)
-        defender.hand.remove(defender_card)
-        self.game_state.basic_discard_pile.append(defender_card)
-        story_logger.info("  - The cards used in the duel are discarded.")
+        self.effect_engine.resolve_effects()
 
     def _trigger_gate_effects(self):
+        """Triggers the Qi Men gate effects for all players based on their current position."""
         story_logger.info("--- Triggering Qi Men Gate Effects ---")
         for player in self.active_players:
             palace = self.game_state.game_board.get_palace_for_zone(player.position)
@@ -334,6 +212,7 @@ class Game:
         for player in self.active_players: self._check_player_elimination(player)
 
     def _update_qimen_gates(self):
+        """Updates the gate layout on the board based on the current solar term."""
         dun_type = self.game_state.dun_type
         ju_number = qm.get_ju_number_for_solar_term(self.game_state.solar_term_index, dun_type)
         gate_layout = qm.get_gate_layout_for_ju(ju_number, dun_type)
@@ -342,86 +221,9 @@ class Game:
             story_logger.info(f"The Qi Men gates have shifted for {dun_type} Dun Ju {ju_number}.")
         else:
             logging.error(f"Could not find gate layout for {dun_type} Dun Ju {ju_number}")
-
-    def _execute_interpretation_phase(self):
-        self.game_state.set_phase("INTERPRETATION")
-        story_logger.info("\n--- Interpretation Phase ---")
-        story_logger.info("Players reveal their cards and effects are triggered based on board order.")
-
-        players_with_cards = [p for p in self.active_players if p.played_card]
-        department_priority = {"tian": 0, "ren": 1, "di": 2, "zhong": 99}
-        def get_interpretation_sort_key(player: Player):
-            zone = self.game_state.game_board.get_zone(player.position)
-            if not zone: return (99, 99)
-            return (zone.luoshu_number, department_priority.get(zone.department, 99))
-
-        players_with_cards.sort(key=get_interpretation_sort_key)
-
-        for player in players_with_cards:
-            card = player.played_card
-            story_logger.info(f"  - {player.name} (at {player.position}) reveals '{card.name}'.")
-            player_zone = self.game_state.game_board.get_zone(player.position)
-            if not player_zone: continue
-
-            variant_key = player_zone.department
-            variant_effect = card.core_mechanism.get("variants", {}).get(variant_key, {}).get("effect")
-            effect_to_queue = variant_effect if variant_effect else card.effect
-
-            if effect_to_queue:
-                self.effect_engine.queue_effect(effect_to_queue, player)
-            else:
-                logging.warning(f"Card {card.name} has no valid effect for department '{variant_key}'.")
-
-        self.effect_engine.resolve_effects()
-        for player in self.active_players: self._check_player_elimination(player)
-
-    def _execute_resolution_phase(self):
-        self.game_state.set_phase("RESOLUTION")
-        story_logger.info("\n--- Resolution Phase ---")
-        story_logger.info("Rewards and penalties from board positions are calculated.")
-
-        for player in self.active_players:
-            zone = self.game_state.game_board.get_zone(player.position)
-            if not zone: continue
-
-            if zone.department == 'tian':
-                reward = zone.gold_reward
-                if reward > 0:
-                    player.change_resource("gold", reward)
-                    self.game_state.game_fund -= reward
-                    story_logger.info(f"  - {player.name} is in a Tian zone and gains {reward} gold.")
-                else:
-                    story_logger.info(f"  - {player.name} is in a stagnant Tian zone and gains no reward.")
-            elif zone.department == 'di':
-                penalty = zone.gold_penalty
-                if penalty > 0:
-                    paid_amount = min(player.gold, penalty)
-                    player.change_resource("gold", -paid_amount)
-                    self.game_state.game_fund += paid_amount
-                    story_logger.info(f"  - {player.name} is in a Di zone and pays a penalty of {paid_amount} gold.")
-            elif zone.department == 'zhong':
-                penalty = math.ceil(player.gold * 0.10)
-                player.change_resource("gold", -penalty)
-                self.game_state.game_fund += penalty
-                story_logger.info(f"  - {player.name} is in the Zhong Gong and pays a 10% tax of {penalty} gold.")
-
-        for player in self.active_players: self._check_player_elimination(player)
-
-    def _execute_upkeep_phase(self):
-        self.game_state.set_phase("UPKEEP")
-        story_logger.info("\n--- Upkeep Phase ---")
         
-        for player in self.active_players:
-            player.tick_statuses()
-            if player.played_card:
-                self.game_state.basic_discard_pile.append(player.played_card)
-                player.played_card = None
-        story_logger.info("  - Players discard used cards and status effects are updated.")
-        
-        self.game_state.advance_to_next_player()
-        story_logger.info(f"  - The turn passes to the next player: {self.game_state.get_active_player().name}.")
-
     def _check_player_elimination(self, player: Player):
+        """Checks if a player should be eliminated and updates their status."""
         if player.is_eliminated: return
         if player.health <= 0:
             player.is_eliminated = True

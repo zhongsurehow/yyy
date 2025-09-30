@@ -51,6 +51,11 @@ class GameState:
     last_resolved_effect: Dict[str, Any] | None = None
     interrupt_flags: Dict[str, bool] = field(default_factory=dict)
     effect_queue: List[Dict[str, Any]] = field(default_factory=list)
+    delayed_effects: List[Dict[str, Any]] = field(default_factory=list)
+    skipped_phases: set = field(default_factory=set) # For phases to be skipped this round
+
+    # World state
+    entities: Dict[str, Any] = field(default_factory=dict) # For traps, beacons, etc. keyed by a unique ID
 
     def get_player(self, player_id: str) -> Player | None:
         """Finds a player by their ID."""

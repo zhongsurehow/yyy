@@ -13,6 +13,7 @@ class Player:
     yin_yang: int = 0
     position: str | None = None
     is_eliminated: bool = False
+    allies: List[str] = field(default_factory=list) # List of player_ids
 
     hand: List[Card] = field(default_factory=list)
     status_effects: List[Dict[str, Any]] = field(default_factory=list)
@@ -22,7 +23,7 @@ class Player:
 
     def __repr__(self) -> str:
         statuses = [s.get('status_id') for s in self.status_effects]
-        return f"Player(id='{self.player_id}', name='{self.name}', health={self.health}, gold={self.gold}, position='{self.position}', statuses={statuses})"
+        return f"Player(id='{self.player_id}', name='{self.name}', health={self.health}, gold={self.gold}, position='{self.position}', statuses={statuses}, allies={self.allies})"
 
     def to_dict(self) -> Dict[str, Any]:
         """Serializes the Player object to a dictionary."""
@@ -34,6 +35,7 @@ class Player:
             "yin_yang": self.yin_yang,
             "position": self.position,
             "is_eliminated": self.is_eliminated,
+            "allies": self.allies,
             "hand": [card.to_dict() for card in self.hand],
             "status_effects": self.status_effects,
             "played_card": self.played_card.to_dict() if self.played_card else None,
@@ -92,7 +94,9 @@ class Player:
             if status.get('is_permanent', False):
                 continue
 
-            if 'duration' in status:
+            # Only tick down integer-based durations. String durations like "NEXT_ATTACK"
+            # would be handled by the specific actions that consume them.
+            if 'duration' in status and isinstance(status['duration'], int):
                 status['duration'] -= 1
                 if status['duration'] <= 0:
                     self.status_effects.remove(status)

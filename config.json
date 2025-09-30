@@ -1,0 +1,18 @@
+{
+  "simulation": {
+    "player_names": [
+      "Player 1 (Alice)",
+      "Player 2 (Bob)"
+    ],
+    "num_rounds": 10,
+    "test_cards": [
+      "basic_14_da_you",
+      "basic_21_shi_he"
+    ]
+  },
+  "game_settings": {
+    "starting_health": 200,
+    "starting_gold": 100,
+    "hand_size": 7
+  }
+}
