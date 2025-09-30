@@ -70,24 +70,47 @@ class TestGameLoop(unittest.TestCase):
         self.assertEqual(self.alice.gold, initial_alice_gold + li_tian_zone.gold_reward)
         self.assertEqual(self.bob.gold, initial_bob_gold - kan_di_zone.gold_penalty)
 
-    def test_qimen_gate_trigger(self):
+    def test_qimen_gate_trigger_yang_and_yin_dun(self):
         """
-        Tests if moving into a palace with a Qi Men gate correctly triggers its effect.
+        Tests if moving into a palace with a Qi Men gate correctly triggers its effect
+        for both Yang and Yin Dun cycles.
         """
-        # Ju 1: Kan palace has 休门 (Rest Gate), which gives +10 health.
-        self.game.game_state.ju_number = 1
-        self.game._update_qimen_gates() # Force update gates
+        # --- YANG DUN TEST ---
+        # setup() initializes the game to solar_term_index 0 (冬至, Yang Dun).
+        # This corresponds to Yang Ju 1. In Yang Ju 1, Kan palace has 休门 (Rest Gate).
+        # 休门 gives +10 health.
+
+        # Ensure gates are set for the initial state (setup() already calls this)
+        self.game._update_qimen_gates()
 
         # Manually move Bob to a Di zone in the Kan palace
         self.bob.position = "kan_di"
         initial_bob_health = self.bob.health
 
-        # The gate effect is triggered at the end of the movement phase.
-        # We call the new, specific method to avoid the random movement.
+        # Trigger gate effects
         self.game._trigger_gate_effects()
 
-        #休门 (+10 health) should have been triggered and resolved.
+        # Assert that the Yang Dun gate effect was applied
         self.assertEqual(self.bob.health, initial_bob_health + 10)
+
+        # --- YIN DUN TEST ---
+        # Now, advance to a Yin Dun solar term and test again.
+        # We'll set the solar term to 13 ("小暑"), which corresponds to Yin Ju 8.
+        # In Yin Ju 8, the Kan palace has the 开门 (Open Gate), which gives +5 gold.
+        self.game.game_state.solar_term_index = 13
+        self.game._update_qimen_gates() # Force update for the new solar term
+
+        # Reset Bob's health to avoid confusion from the previous test part
+        self.bob.health = initial_bob_health
+        initial_bob_gold = self.bob.gold
+
+        # Bob is already in "kan_di", so we just trigger the effects again.
+        self.game._trigger_gate_effects()
+
+        # Assert that the Yin Dun gate effect was applied
+        self.assertEqual(self.bob.gold, initial_bob_gold + 5)
+        # Assert that health did not change this time
+        self.assertEqual(self.bob.health, initial_bob_health)
 
 if __name__ == '__main__':
     unittest.main()

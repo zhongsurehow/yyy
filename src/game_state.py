@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 from .card import Card
 from .player import Player
 from .game_board import GameBoard
+from .solar_term import SolarTerm, SOLAR_TERMS_CYCLE, DunType
 
 @dataclass
 class GameState:
@@ -29,11 +30,21 @@ class GameState:
     game_fund: int = 0
     current_celestial_stem: Card | None = None
     current_terrestrial_branch: Card | None = None
-    ju_number: int = 1
+    solar_term_index: int = 0
     current_turn: int = 1
     current_phase: str = "SETUP" # e.g., SETUP, TIME, PLACEMENT, MOVEMENT, etc.
     active_player_index: int = 0
     starting_player_index: int = 0  # Track which player started the current Ju
+
+    @property
+    def current_solar_term(self) -> SolarTerm:
+        """Returns the current SolarTerm object."""
+        return SOLAR_TERMS_CYCLE[self.solar_term_index]
+
+    @property
+    def dun_type(self) -> DunType:
+        """Returns the Dun type ('YANG' or 'YIN') for the current solar term."""
+        return self.current_solar_term.dun
 
     # Rule and effect tracking
     active_rules: Dict[str, Any] = field(default_factory=dict)
@@ -50,20 +61,22 @@ class GameState:
         return self.players[self.active_player_index]
 
     def advance_to_next_player(self):
-        """Advances the turn to the next player. Increments Ju when all players have been starting player."""
+        """
+        Advances the turn to the next player.
+        When a full cycle of players completes, advances the solar term.
+        """
         self.active_player_index = (self.active_player_index + 1) % len(self.players)
-        
-        # Check if we've completed a full cycle of starting players
-        if self.active_player_index == self.starting_player_index:
-            # All players have been starting player once - advance Ju
-            self.ju_number += 1
-            self.starting_player_index = self.active_player_index  # Reset for next Ju
-            logging.info(f"*** New Ju: {self.ju_number}. Qi Men Gates will shift. ***")
         
         # Always increment turn when we complete a full player cycle
         if self.active_player_index == 0:
             self.current_turn += 1
             logging.info(f"--- Starting Round {self.current_turn} ---")
+
+        # Check if we've completed a full cycle of starting players
+        if self.active_player_index == self.starting_player_index:
+            # A full round of play has passed, advance to the next solar term
+            self.solar_term_index = (self.solar_term_index + 1) % len(SOLAR_TERMS_CYCLE)
+            logging.info(f"*** New Solar Term: {self.current_solar_term.name} ({self.dun_type} Dun). Qi Men Gates will shift. ***")
 
     def set_phase(self, phase_name: str):
         """Sets the current game phase."""
@@ -81,7 +94,8 @@ class GameState:
             "current_turn": self.current_turn,
             "current_phase": self.current_phase,
             "active_player_id": self.get_active_player().player_id,
-            "ju_number": self.ju_number,
+            "solar_term": self.current_solar_term.name,
+            "dun_type": self.dun_type,
             "game_fund": self.game_fund,
             "current_celestial_stem": self.current_celestial_stem.to_dict() if self.current_celestial_stem else None,
             "current_terrestrial_branch": self.current_terrestrial_branch.to_dict() if self.current_terrestrial_branch else None,

@@ -111,9 +111,13 @@ class Game:
     def _execute_time_phase(self):
         self.game_state.set_phase("TIME")
         logging.info("--- Phase: TIME ---")
-        logging.info(f"当前局数: 阳遁第{self.game_state.ju_number}局")
+        dun_type = self.game_state.dun_type
+        dun_text = "阳" if dun_type == "YANG" else "阴"
+        solar_term_name = self.game_state.current_solar_term.name
+        ju_number = qm.get_ju_number_for_solar_term(self.game_state.solar_term_index, dun_type)
+        logging.info(f"当前节气: {solar_term_name} ({dun_text}遁), 第{ju_number}局")
 
-        # Update Qi Men gates based on the current Ju number
+        # Update Qi Men gates based on the current solar term
         self._update_qimen_gates()
 
         # 1. Discard previous Gan-Zhi cards
@@ -300,14 +304,16 @@ class Game:
             self._check_player_elimination(player)
 
     def _update_qimen_gates(self):
-        """Updates the gate layout on the board based on the current Ju number."""
-        ju_number = self.game_state.ju_number
-        gate_layout = qm.get_gate_layout_for_ju(ju_number)
+        """Updates the gate layout on the board based on the current solar term."""
+        dun_type = self.game_state.dun_type
+        ju_number = qm.get_ju_number_for_solar_term(self.game_state.solar_term_index, dun_type)
+
+        gate_layout = qm.get_gate_layout_for_ju(ju_number, dun_type)
         if gate_layout:
             self.game_state.game_board.qimen_gates = gate_layout
-            logging.info(f"Qi Men gates updated for Ju {ju_number}: {gate_layout}")
+            logging.info(f"Qi Men gates updated for {dun_type} Dun Ju {ju_number}: {gate_layout}")
         else:
-            logging.error(f"Could not find gate layout for Ju {ju_number}")
+            logging.error(f"Could not find gate layout for {dun_type} Dun Ju {ju_number}")
 
     def _execute_interpretation_phase(self):
         self.game_state.set_phase("INTERPRETATION")
@@ -419,7 +425,11 @@ class Game:
         # Advance to next player after upkeep phase
         self.game_state.advance_to_next_player()
         logging.info(f"推进到下一位玩家: {self.game_state.get_active_player().name}")
-        logging.info(f"当前局数: 阳遁第{self.game_state.ju_number}局, 回合: {self.game_state.current_turn}")
+        dun_type = self.game_state.dun_type
+        dun_text = "阳" if dun_type == "YANG" else "阴"
+        solar_term_name = self.game_state.current_solar_term.name
+        ju_number = qm.get_ju_number_for_solar_term(self.game_state.solar_term_index, dun_type)
+        logging.info(f"当前节气: {solar_term_name} ({dun_text}遁第{ju_number}局), 回合: {self.game_state.current_turn}")
 
     def _check_player_elimination(self, player: Player):
         """Checks if a player should be eliminated and updates their status."""
