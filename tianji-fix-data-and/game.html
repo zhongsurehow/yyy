@@ -3,52 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天机变 - Python后端驱动</title>
-    <!-- Socket.IO 客户端库 -->
+    <title>天机变 - Web版</title>
+    <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-    <style>
-        /* CSS 样式保持不变 */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'KaiTi', 'SimSun', serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #e6e6e6; min-height: 100vh; padding: 20px; }
-        .container { max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; height: calc(100vh - 40px); }
-        .game-area { display: flex; flex-direction: column; gap: 20px; }
-        .game-board-container { flex: 1; background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 5px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); overflow: visible; min-height: 700px; display: flex; align-items: center; justify-content: center; position: relative; }
-        #game-board { width: 90%; height: 90%; min-height: 650px; transform: scale(0.8); transform-origin: center; }
-        .controls { display: flex; gap: 10px; justify-content: center; padding: 15px; background: rgba(255, 255, 255, 0.08); border-radius: 10px; }
-        button { padding: 12px 24px; border: none; border-radius: 8px; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); color: white; font-family: inherit; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
-        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
-        button:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
-        .sidebar { display: flex; flex-direction: column; gap: 20px; }
-        .panel { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; }
-        .player-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .player-card { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 15px; border-radius: 10px; border-left: 4px solid; }
-        .player-1 { border-left-color: #e74c3c; }
-        .player-2 { border-left-color: #3498db; }
-        .player-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-        .player-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; }
-        .stat { display: flex; justify-content: space-between; padding: 4px 0; }
-        h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; }
-        .zone { stroke: #6b4f3a; stroke-width: 4; cursor: pointer; transition: all 0.3s ease-in-out; }
-        .gong-li   { fill: #c0392b; } .gong-kun  { fill: #f1c40f; } .gong-dui  { fill: #bdc3c7; } .gong-qian { fill: #ecf0f1; } .gong-kan  { fill: #2c3e50; } .gong-gen  { fill: #d3a47c; } .gong-zhen { fill: #27ae60; } .gong-xun  { fill: #2ecc71; }
-        .bu-di { opacity: 0.7; } .bu-ren { opacity: 0.85; } .bu-tian { opacity: 1; }
-        #Gong_Zhong { cursor: pointer; animation: spin 20s linear infinite; transform-origin: center; }
-        .taiji-black-bg { fill: black; stroke: #333; stroke-width: 5; } .taiji-white-half { fill: white; } .taiji-white-semicircle { fill: white; } .taiji-black-semicircle { fill: black; } .fisheye-white { fill: white; } .fisheye-black { fill: black; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .labels, .trigram-symbol { text-anchor: middle; pointer-events: none; fill: black; stroke: white; stroke-width: 1.5px; paint-order: stroke; }
-        .label-on-dark, .symbol-on-dark { fill: white; stroke: black; } .labels { font-size: 40px; } .trigram-symbol { font-size: 60px; font-weight: bold; }
-        .player-piece { pointer-events: none; transition: all 0.5s ease; }
-        .player-1-piece { fill: #e74c3c; stroke: #c0392b; stroke-width: 3; filter: drop-shadow(0 0 10px rgba(231, 76, 60, 0.8)); }
-        .player-2-piece { fill: #3498db; stroke: #2980b9; stroke-width: 3; filter: drop-shadow(0 0 10px rgba(52, 152, 219, 0.8)); }
-        .current-player { animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { filter: drop-shadow(0 0 5px currentColor); } 50% { filter: drop-shadow(0 0 20px currentColor); } 100% { filter: drop-shadow(0 0 5px currentColor); } }
-        .qimen-door { pointer-events: none; }
-        .door-circle { fill: rgba(255, 255, 255, 0.95); stroke: #4ecdc4; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(78, 205, 196, 0.6)); }
-        .door-text { font-size: 23px; font-weight: bold; fill: #2c3e50; text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: 'KaiTi', 'SimSun', serif; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); }
-        .ju-info { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
-        .turn-info { position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
-        .phase-info { position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
-        .player-status { position: absolute; bottom: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000; max-width: 300px; }
-    </style>
 </head>
 <body>
     <div class="container">
@@ -57,7 +14,7 @@
                 <div class="ju-info" id="ju-info">等待游戏开始...</div>
                 <div class="turn-info" id="turn-info">回合: 0</div>
                 <div class="phase-info" id="phase-info">阶段: 等待开始</div>
-                <div class="player-status" id="player-status">玩家状态: 等待开始</div>
+
                 <svg id="game-board" viewBox="0 0 800 800">
                     <g id="di-ring" class="ring-group"></g>
                     <g id="ren-ring" class="ring-group"></g>
@@ -71,232 +28,44 @@
                         <circle class="fisheye-white" cx="400" cy="441" r="12" />
                     </g>
                     <g id="text-labels" class="labels"></g>
-                    <g id="trigram-symbols-layer"></g>
                     <g id="player-pieces"></g>
                     <g id="qimen-doors"></g>
                 </svg>
             </div>
             <div class="controls">
                 <button id="start-game">开始游戏</button>
-                <button id="next-round" disabled>下一回合</button>
+                <button id="next-phase" disabled>下一阶段</button>
                 <button id="reset-game">重置游戏</button>
             </div>
         </div>
         <div class="sidebar">
             <div class="panel player-info">
                 <div class="player-card player-1">
-                    <div class="player-name">
-                        <span id="player1-name">玩家一</span>
-                        <span id="player1-indicator" class="current-indicator" style="opacity: 0.3">●</span>
-                    </div>
+                    <div class="player-name" id="player1-name">玩家一</div>
                     <div class="player-stats">
-                        <div class="stat"><span>生命值:</span><span id="player1-health">?</span></div>
+                        <div class="stat"><span>生命:</span><span id="player1-health">?</span></div>
                         <div class="stat"><span>金币:</span><span id="player1-gold">?</span></div>
                         <div class="stat"><span>位置:</span><span id="player1-position">-</span></div>
                     </div>
+                     <span id="player1-indicator" class="current-indicator" style="opacity: 0.3">●</span>
                 </div>
                 <div class="player-card player-2">
-                    <div class="player-name">
-                        <span id="player2-name">玩家二</span>
-                        <span id="player2-indicator" class="current-indicator" style="opacity: 0.3">●</span>
-                    </div>
+                    <div class="player-name" id="player2-name">玩家二</div>
                     <div class="player-stats">
-                        <div class="stat"><span>生命值:</span><span id="player2-health">?</span></div>
+                        <div class="stat"><span>生命:</span><span id="player2-health">?</span></div>
                         <div class="stat"><span>金币:</span><span id="player2-gold">?</span></div>
                         <div class="stat"><span>位置:</span><span id="player2-position">-</span></div>
                     </div>
+                    <span id="player2-indicator" class="current-indicator" style="opacity: 0.3">●</span>
+                </div>
+            </div>
+            <div class="panel log-panel">
+                <h2>游戏日志</h2>
+                <div id="log-messages">
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        const socket = io();
-
-        // --- Static Map Data for Rendering ---
-        const mapData = {
-            center: { x: 400, y: 400 },
-            palaces: [
-                { id: 'li',   name: '离', symbol: '☲', luoshu: 9, angle: -22.5 },
-                { id: 'kun',  name: '坤', symbol: '☷', luoshu: 2, angle: 22.5 },
-                { id: 'dui',  name: '兑', symbol: '☱', luoshu: 7, angle: 67.5 },
-                { id: 'qian', name: '乾', symbol: '☰', luoshu: 6, angle: 112.5 },
-                { id: 'kan',  name: '坎', symbol: '☵', luoshu: 1, angle: 157.5 },
-                { id: 'gen',  name: '艮', symbol: '☶', luoshu: 8, angle: 202.5 },
-                { id: 'zhen', name: '震', symbol: '☳', luoshu: 3, angle: 247.5 },
-                { id: 'xun',  name: '巽', symbol: '☴', luoshu: 4, angle: 292.5 }
-            ],
-            departments: [
-                { id: 'tian', name: '天', innerRadius: 82,  outerRadius: 148 },
-                { id: 'ren',  name: '人', innerRadius: 148, outerRadius: 230 },
-                { id: 'di',   name: '地', innerRadius: 230, outerRadius: 313 }
-            ],
-            zones: {}
-        };
-
-        // --- Core UI Update Function ---
-        function updateUI(state) {
-            console.log("Received game state update:", state);
-
-            // Update Player Panels
-            state.players.forEach(player => {
-                const id = player.player_id;
-                document.getElementById(`player${id}-name`).textContent = player.name;
-                document.getElementById(`player${id}-health`).textContent = player.health;
-                document.getElementById(`player${id}-gold`).textContent = player.gold;
-                document.getElementById(`player${id}-indicator`).style.opacity = player.player_id === state.active_player_id ? '1' : '0.3';
-
-                const zone = state.game_board.zones[player.position];
-                document.getElementById(`player${id}-position`).textContent = zone ? `${zone.palace}-${zone.department}` : '-';
-            });
-
-            // Update Player Pieces on Board
-            const piecesGroup = document.getElementById('player-pieces');
-            piecesGroup.innerHTML = ''; // Clear old pieces
-            state.players.forEach(player => {
-                // Only draw player piece if position is valid and zone exists
-                if (player.position && player.position !== 'None' && mapData.zones[player.position]) {
-                    const center = mapData.zones[player.position].center;
-                    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-                    circle.setAttribute('cx', center.x);
-                    circle.setAttribute('cy', center.y);
-                    circle.setAttribute('r', 12);
-                    circle.setAttribute('class', `player-piece player-${player.player_id}-piece ${player.player_id === state.active_player_id ? 'current-player' : ''}`);
-                    piecesGroup.appendChild(circle);
-                }
-            });
-
-            // Update Ju Info
-            document.getElementById('ju-info').textContent = `奇门遁甲: 阳遁第${state.ju_number}局`;
-
-            // Update Turn Info
-            document.getElementById('turn-info').textContent = `回合: ${state.current_turn}`;
-
-            // Update Phase Info
-            document.getElementById('phase-info').textContent = `阶段: ${state.current_phase}`;
-
-            // Update Player Status
-            const playerStatus = state.players.map(p => 
-                `${p.name}: 生命${p.health} 金币${p.gold} 手牌${p.hand ? p.hand.length : 0}`
-            ).join(' | ');
-            document.getElementById('player-status').textContent = `玩家状态: ${playerStatus}`;
-
-            // Update Qi Men Gates
-            updateQimenGates(state.game_board.qimen_gates);
-        }
-
-        function updateQimenGates(gates) {
-            const svgNS = "http://www.w3.org/2000/svg";
-            const doorsGroup = document.getElementById('qimen-doors');
-            doorsGroup.innerHTML = '';
-            const qimenRadius = (mapData.departments[2].innerRadius + 395) / 2; // Outer radius of Di + some padding
-
-            for (const palaceId in gates) {
-                const gateSymbol = gates[palaceId];
-                const palace = mapData.palaces.find(p => p.id === palaceId);
-                if (palace) {
-                    const qimenAngle = palace.angle + 22.5;
-                    const center = polarToCartesian(mapData.center.x, mapData.center.y, qimenRadius, qimenAngle);
-
-                    const doorGroup = document.createElementNS(svgNS, 'g');
-                    doorGroup.setAttribute('class', 'qimen-door');
-                    const circle = document.createElementNS(svgNS, 'circle');
-                    circle.setAttribute('cx', center.x);
-                    circle.setAttribute('cy', center.y);
-                    circle.setAttribute('r', 25);
-                    circle.setAttribute('class', 'door-circle');
-                    doorGroup.appendChild(circle);
-
-                    const symbol = document.createElementNS(svgNS, 'text');
-                    symbol.setAttribute('x', center.x);
-                    symbol.setAttribute('y', center.y);
-                    symbol.setAttribute('class', 'door-text');
-                    symbol.textContent = gateSymbol;
-                    doorGroup.appendChild(symbol);
-                    doorsGroup.appendChild(doorGroup);
-                }
-            }
-        }
-
-        // --- Initial Map Drawing (Static part) ---
-        function initializeMap() {
-            const svgNS = "http://www.w3.org/2000/svg";
-            // Pre-calculate zone center points
-            mapData.palaces.forEach(palace => {
-                mapData.departments.forEach(dept => {
-                    const zoneId = `${palace.id}_${dept.id}`;
-                    const radius = (dept.innerRadius + dept.outerRadius) / 2;
-                    const centerAngle = palace.angle + 22.5;
-                    mapData.zones[zoneId] = { center: polarToCartesian(mapData.center.x, mapData.center.y, radius, centerAngle) };
-                });
-            });
-            mapData.zones["zhong_gong"] = { center: { x: 400, y: 400 } };
-
-            // Draw the board rings
-            mapData.palaces.forEach(palace => {
-                mapData.departments.forEach(dept => {
-                    const path = createAnnulusSector(mapData.center.x, mapData.center.y, dept.innerRadius, dept.outerRadius, palace.angle, palace.angle + 45);
-                    path.setAttribute('class', `zone gong-${palace.id} bu-${dept.id}`);
-                    document.getElementById(`${dept.id}-ring`).appendChild(path);
-                });
-            });
-
-            // Draw labels
-            const labelsGroup = document.getElementById('text-labels');
-            const symbolsGroup = document.getElementById('trigram-symbols-layer');
-            mapData.palaces.forEach(palace => {
-                const angle = palace.angle + 22.5;
-                const isDark = palace.id === 'kan';
-
-                const labelPos = polarToCartesian(mapData.center.x, mapData.center.y, (mapData.departments[1].innerRadius + mapData.departments[1].outerRadius) / 2, angle);
-                const text = document.createElementNS(svgNS, 'text');
-                text.setAttribute('x', labelPos.x); text.setAttribute('y', labelPos.y); text.setAttribute('dy', '0.35em');
-                text.setAttribute('class', isDark ? 'labels label-on-dark' : 'labels');
-                text.textContent = palace.name;
-                if (angle > 90 && angle < 270) text.setAttribute('transform', `rotate(180 ${labelPos.x} ${labelPos.y})`);
-                labelsGroup.appendChild(text);
-
-                const symbolPos = polarToCartesian(mapData.center.x, mapData.center.y, (mapData.departments[2].innerRadius + mapData.departments[2].outerRadius) / 2, angle);
-                const symbolText = document.createElementNS(svgNS, 'text');
-                symbolText.setAttribute('x', symbolPos.x); symbolText.setAttribute('y', symbolPos.y); symbolText.setAttribute('dy', '0.35em');
-                symbolText.setAttribute('class', `trigram-symbol ${isDark ? 'symbol-on-dark' : ''}`);
-                symbolText.textContent = palace.symbol;
-                if (angle > 90 && angle < 270) symbolText.setAttribute('transform', `rotate(180 ${symbolPos.x} ${symbolPos.y})`);
-                symbolsGroup.appendChild(symbolText);
-            });
-        }
-        function createAnnulusSector(cx, cy, r0, r1, a0, a1) {
-            const p0 = polarToCartesian(cx, cy, r0, a0); const p1 = polarToCartesian(cx, cy, r1, a0);
-            const p2 = polarToCartesian(cx, cy, r1, a1); const p3 = polarToCartesian(cx, cy, r0, a1);
-            const largeArc = a1 - a0 <= 180 ? "0" : "1";
-            const d = `M ${p0.x} ${p0.y} L ${p1.x} ${p1.y} A ${r1} ${r1} 0 ${largeArc} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${r0} ${r0} 0 ${largeArc} 0 ${p0.x} ${p0.y} Z`;
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute("d", d);
-            return path;
-        }
-        function polarToCartesian(cx, cy, r, angle) {
-            const a = (angle - 90) * Math.PI / 180;
-            return { x: cx + (r * Math.cos(a)), y: cy + (r * Math.sin(a)) };
-        }
-
-        // --- Event Listeners ---
-        socket.on('connect', () => {
-            console.log('Connected to server!');
-        });
-
-        socket.on('game_state_update', (state) => {
-            updateUI(state);
-            document.getElementById('start-game').disabled = state.current_phase !== 'SETUP';
-            document.getElementById('next-round').disabled = state.current_phase === 'SETUP' || state.players.filter(p => !p.is_eliminated).length <= 1;
-        });
-
-        document.getElementById('start-game').addEventListener('click', () => socket.emit('start_game'));
-        document.getElementById('next-round').addEventListener('click', () => socket.emit('next_round'));
-        document.getElementById('reset-game').addEventListener('click', () => socket.emit('reset_game'));
-
-        // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', initializeMap);
-
-    </script>
+    <script src="/static/game.js"></script>
 </body>
 </html>

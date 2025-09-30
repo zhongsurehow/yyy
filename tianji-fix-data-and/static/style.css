@@ -1,0 +1,48 @@
+/* CSS 样式保持不变 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'KaiTi', 'SimSun', serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #e6e6e6; min-height: 100vh; padding: 20px; }
+.container { max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 350px; gap: 20px; height: calc(100vh - 40px); }
+.game-area { display: flex; flex-direction: column; gap: 20px; }
+.game-board-container { flex: 1; background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 5px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); overflow: visible; min-height: 700px; display: flex; align-items: center; justify-content: center; position: relative; }
+#game-board { width: 90%; height: 90%; min-height: 650px; transform: scale(0.8); transform-origin: center; }
+.controls { display: flex; gap: 10px; justify-content: center; padding: 15px; background: rgba(255, 255, 255, 0.08); border-radius: 10px; }
+button { padding: 12px 24px; border: none; border-radius: 8px; background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); color: white; font-family: inherit; font-size: 16px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
+button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+button:disabled { background: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+.sidebar { display: flex; flex-direction: column; gap: 20px; }
+.panel { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; }
+.player-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.player-card { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 15px; border-radius: 10px; border-left: 4px solid; }
+.player-1 { border-left-color: #e74c3c; }
+.player-2 { border-left-color: #3498db; }
+.player-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.player-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; }
+.stat { display: flex; justify-content: space-between; padding: 4px 0; }
+h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; }
+.zone { stroke: #6b4f3a; stroke-width: 4; cursor: pointer; transition: all 0.3s ease-in-out; }
+.gong-li   { fill: #c0392b; } .gong-kun  { fill: #f1c40f; } .gong-dui  { fill: #bdc3c7; } .gong-qian { fill: #ecf0f1; } .gong-kan  { fill: #2c3e50; } .gong-gen  { fill: #d3a47c; } .gong-zhen { fill: #27ae60; } .gong-xun  { fill: #2ecc71; }
+.bu-di { opacity: 0.7; } .bu-ren { opacity: 0.85; } .bu-tian { opacity: 1; }
+#Gong_Zhong { cursor: pointer; animation: spin 20s linear infinite; transform-origin: center; }
+.taiji-black-bg { fill: black; stroke: #333; stroke-width: 5; } .taiji-white-half { fill: white; } .taiji-white-semicircle { fill: white; } .taiji-black-semicircle { fill: black; } .fisheye-white { fill: white; } .fisheye-black { fill: black; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.labels, .trigram-symbol { text-anchor: middle; pointer-events: none; fill: black; stroke: white; stroke-width: 1.5px; paint-order: stroke; }
+.label-on-dark, .symbol-on-dark { fill: white; stroke: black; } .labels { font-size: 40px; } .trigram-symbol { font-size: 60px; font-weight: bold; }
+.player-piece { pointer-events: none; transition: all 0.5s ease; }
+.player-1-piece { fill: #e74c3c; stroke: #c0392b; stroke-width: 3; filter: drop-shadow(0 0 10px rgba(231, 76, 60, 0.8)); }
+.player-2-piece { fill: #3498db; stroke: #2980b9; stroke-width: 3; filter: drop-shadow(0 0 10px rgba(52, 152, 219, 0.8)); }
+.current-player { animation: pulse 2s infinite; }
+@keyframes pulse { 0% { filter: drop-shadow(0 0 5px currentColor); } 50% { filter: drop-shadow(0 0 20px currentColor); } 100% { filter: drop-shadow(0 0 5px currentColor); } }
+.qimen-door { pointer-events: none; }
+.door-circle { fill: rgba(255, 255, 255, 0.95); stroke: #4ecdc4; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(78, 205, 196, 0.6)); }
+.door-text { font-size: 23px; font-weight: bold; fill: #2c3e50; text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: 'KaiTi', 'SimSun', serif; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); }
+.ju-info { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
+.turn-info { position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
+.phase-info { position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
+.player-status { position: absolute; bottom: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000; max-width: 300px; }
+.log-panel { flex-grow: 1; display: flex; flex-direction: column; }
+#log-messages { flex-grow: 1; background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.6; color: #a2d2ff; border: 1px solid rgba(255, 255, 255, 0.1); }
+#log-messages p { margin-bottom: 5px; }
+#log-messages p:last-child { margin-bottom: 0; }
+.log-message { border-bottom: 1px solid rgba(162, 210, 255, 0.2); padding-bottom: 5px; margin-bottom: 5px; }
+.log-message.error { color: #ff6b6b; font-weight: bold; }
+.log-message.victory { color: #50fa7b; font-weight: bold; font-size: 16px; text-align: center; }
