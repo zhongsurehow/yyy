@@ -15,7 +15,7 @@ class GameLoader:
 
     def load_all_cards(self) -> Dict[str, List[Card]]:
         """
-        Loads all card data from the `assets/data/cards` subdirectory.
+        Loads all card data from the consolidated `assets/data/cards.json` file.
 
         Returns:
             A dictionary mapping deck type (e.g., "basic", "function") to a list of Card objects.
@@ -29,39 +29,38 @@ class GameLoader:
             "celestial_stem": [],
             "terrestrial_branch": []
         }
-        card_data_path = self.assets_path / "data" / "cards"
+        card_data_path = self.assets_path / "data" / "cards.json"
 
-        print("--- Loading Card Data from File System ---")
-        if not card_data_path.is_dir():
-            print(f"Error: Card data path not found at '{card_data_path}'")
+        print("--- Loading Card Data from Consolidated File ---")
+        if not card_data_path.is_file():
+            print(f"Error: Consolidated card data file not found at '{card_data_path}'")
             return decks
 
-        # Find all json files recursively
-        json_files = list(card_data_path.rglob("*.json"))
-        print(f"Found {len(json_files)} card files to load.")
+        try:
+            with open(card_data_path, 'r', encoding='utf-8') as f:
+                all_card_data = json.load(f)
 
-        for file_path in json_files:
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    card = Card.from_json(data)
+            print(f"Found {len(all_card_data)} cards to load.")
 
-                    card_type = card.card_type
-                    if card_type in decks:
-                        decks[card_type].append(card)
-                    elif card_type == "stem":
-                        decks["celestial_stem"].append(card)
-                    elif card_type == "branch":
-                        decks["terrestrial_branch"].append(card)
-                    elif card_type == "celestial":
-                         decks["state"].append(card)
-                    else:
-                        print(f"Warning: Card '{card.card_id}' has unknown type '{card_type}'. Skipping.")
+            for data in all_card_data:
+                card = Card.from_json(data)
+                card_type = card.card_type
 
-            except json.JSONDecodeError:
-                print(f"Error: Could not decode JSON from {file_path}")
-            except Exception as e:
-                print(f"Error: Failed to load card from {file_path}: {e}")
+                if card_type in decks:
+                    decks[card_type].append(card)
+                elif card_type == "stem":
+                    decks["celestial_stem"].append(card)
+                elif card_type == "branch":
+                    decks["terrestrial_branch"].append(card)
+                elif card_type == "celestial":
+                    decks["state"].append(card)
+                else:
+                    print(f"Warning: Card '{card.card_id}' has unknown type '{card_type}'. Skipping.")
+
+        except json.JSONDecodeError:
+            print(f"Error: Could not decode JSON from {card_data_path}")
+        except Exception as e:
+            print(f"Error: Failed to load cards from {card_data_path}: {e}")
 
         print(f"Loaded {len(decks['basic'])} basic cards.")
         print(f"Loaded {len(decks['function'])} function cards.")
