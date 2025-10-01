@@ -19,28 +19,27 @@ Each round of the game is divided into six distinct phases, executed in order:
 
 ## 3. Core Mechanics: The Cosmic Engine
 
-The strategic landscape of the board is in constant flux, governed by a multi-layered system based on the Chinese calendar and metaphysics. This system advances automatically at the start of each new round.
+The strategic landscape of the board is in constant flux, governed by a multi-layered system based on the Chinese calendar and metaphysics. This system advances automatically at the start of each new round (after the first round concludes).
 
-### 3.1. The 24 Solar Terms (二十四节气)
+### 3.1. Seasonal Progression: Solar Terms and Dun Cycles
 
-The game progresses through the 24 solar terms of the traditional Chinese calendar, starting from the Winter Solstice (冬至). Each full round of gameplay advances the game state to the next solar term in the cycle. This progression is critical as it determines the Yin or Yang Dun cycle.
+The game's clock is the **24 Solar Terms (二十四节气)**.
+- At the beginning of each new round, the game advances to the next solar term in the cycle (e.g., from Winter Solstice to Lesser Cold).
+- The current solar term determines whether the round operates under the **Yang Dun (阳遁)** or **Yin Dun (阴遁)** cycle. This is the most critical factor for the round's setup.
+  - **Yang Dun Cycle**: Active from the Winter Solstice (冬至) to the Summer Solstice (夏至).
+  - **Yin Dun Cycle**: Active from the Summer Solstice (夏至) back to the Winter Solstice (冬至).
 
-### 3.2. Yin & Yang Dun Cycles (阴阳遁)
+### 3.2. Plate Calculation: The Qi Men Ju (奇门局)
 
-Each solar term belongs to either the Yang Dun (阳遁) or Yin Dun (阴遁) cycle. This is the primary factor in determining the layout of the Qi Men plate for the round. The game engine correctly identifies the Dun cycle for the current solar term.
+At the start of each round, the engine uses the current solar term and its Dun cycle to calculate the **Ju (局)**, or "plate layout number," for the round. This number dictates the positions of the Eight Gates.
 
--   **Yang Dun**: Spans from the Winter Solstice to the Summer Solstice.
--   **Yin Dun**: Spans from the Summer Solstice back to the Winter Solstice.
+-   **Ju Calculation**: The calculation is based on the solar term's position within its 12-term Dun cycle.
+    -   For **Yang Dun**, the Ju number cycles from 1 to 9. For example, the first solar term of the Yang cycle (Winter Solstice) uses **Yang Ju 1 (阳遁一局)**.
+    -   For **Yin Dun**, the Ju number cycles in reverse, from 9 to 1. For example, the first solar term of the Yin cycle (Summer Solstice) uses **Yin Ju 9 (阴遁九局)**.
 
-### 3.3. Qi Men Ju Calculation (奇门局)
+### 3.3. The Eight Gates (八门)
 
-Based on the current solar term and its Dun type, the engine automatically calculates the correct "Ju" (局), or "plate layout number". For example, the first solar term of the Yang Dun cycle corresponds to "Yang Dun, Ju 1" (阳遁一局), while the first term of the Yin Dun cycle corresponds to "Yin Dun, Ju 9" (阴遁九局).
-
-This Ju number is then used to look up the correct positions for the Eight Gates.
-
-### 3.4. The Eight Gates (八门)
-
-The Ju number determines the placement of the eight gates (休, 生, 伤, 杜, 景, 死, 惊, 开) on the eight palaces of the game board. Each gate has a distinct effect and is classified as either Auspicious (吉门), Inauspicious (凶门), or Neutral (中平门). These effects are triggered when a player ends their movement in a palace, making the gate layout a core strategic element of the game.
+The calculated Ju number determines the placement of the eight gates (休, 生, 伤, 杜, 景, 死, 惊, 开) on the eight palaces of the game board. Each gate has a distinct effect and is classified as either **Auspicious (吉门)**, **Inauspicious (凶门)**, or **Neutral (中平门)**. These effects are triggered when a player ends their movement in a palace, making the gate layout a core strategic element of the game.
 
 ## 4. Movement and Duels
 
