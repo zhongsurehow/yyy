@@ -17,6 +17,8 @@ The application provides a fully playable two-person game, rendering the complex
 
 ## Core Game Mechanics
 
+This engine fully simulates the cyclical nature of the game's core metaphysical systems. For a detailed breakdown of the rules, please see the [Game Rules](./docs/game_rules.md) document.
+
 This engine fully simulates the cyclical nature of the game's core metaphysical systems:
 
 -   **24 Solar Terms (二十四节气)**: The game progresses through the 24 solar terms, from Winter Solstice (冬至) to Great Cold (大寒). Each full round of gameplay advances the solar term, changing the underlying energies of the board.
