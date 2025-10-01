@@ -21,8 +21,14 @@ button:disabled { background: #666; cursor: not-allowed; transform: none; box-sh
 .player-hand-container { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
 .player-hand-container h4 { font-size: 16px; margin-bottom: 10px; text-align: center; color: #bde0fe; }
 .player-hand { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.card { background: #4a4e69; color: #f2e9e4; padding: 6px 10px; border-radius: 5px; font-size: 13px; border: 1px solid #9a8c98; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: help; transition: all 0.2s ease-in-out; text-align: center; }
+.card { background: #4a4e69; color: #f2e9e4; padding: 6px 10px; border-radius: 5px; font-size: 13px; border: 1px solid #9a8c98; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.2s ease-in-out; text-align: center; }
 .card:hover { transform: translateY(-2px); background: #6b6392; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+.card.selected {
+    border-color: #ffc107;
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
+    transform: translateY(-2px) scale(1.05);
+    background: #8370b8;
+}
 h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; }
 .zone { stroke: #6b4f3a; stroke-width: 4; cursor: pointer; transition: all 0.3s ease-in-out; }
 .gong-li   { fill: #c0392b; } .gong-kun  { fill: #f1c40f; } .gong-dui  { fill: #bdc3c7; } .gong-qian { fill: #ecf0f1; } .gong-kan  { fill: #2c3e50; } .gong-gen  { fill: #d3a47c; } .gong-zhen { fill: #27ae60; } .gong-xun  { fill: #2ecc71; }

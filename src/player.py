@@ -44,6 +44,10 @@ class Player:
     def add_card_to_hand(self, card: Card):
         self.hand.append(card)
 
+    def find_card_in_hand(self, card_id: str) -> Card | None:
+        """Finds a card in the player's hand by its ID."""
+        return next((card for card in self.hand if card.card_id == card_id), None)
+
     def play_card(self, card_id: str) -> Card | None:
         card_to_play = next((card for card in self.hand if card.card_id == card_id), None)
         if card_to_play:

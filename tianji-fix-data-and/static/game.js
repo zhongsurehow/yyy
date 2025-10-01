@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Element References ---
     const elements = {
         startGameBtn: document.getElementById('start-game'),
+        playCardBtn: document.getElementById('play-card'),
         nextPhaseBtn: document.getElementById('next-phase'),
         resetGameBtn: document.getElementById('reset-game'),
         player1Name: document.getElementById('player1-name'),
@@ -28,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         logMessages: document.getElementById('log-messages'),
         qimenDoorsGroup: document.getElementById('qimen-doors'),
     };
+
+    let selected_card = { playerId: null, cardId: null };
 
     // --- Static Map Data for Rendering ---
     const mapData = {
@@ -79,6 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 cardDiv.className = 'card';
                 cardDiv.textContent = card.name;
                 cardDiv.title = card.description;
+                cardDiv.dataset.cardId = card.card_id;
+                cardDiv.dataset.playerId = player.player_id;
+
+                // Add click listener for card selection, but only for the active player during the placement phase
+                if (player.player_id === state.active_player_id && state.current_phase === 'PLACEMENT') {
+                    cardDiv.addEventListener('click', () => handleCardClick(player.player_id, card.card_id, cardDiv, state));
+                } else {
+                    cardDiv.style.cursor = 'default';
+                }
+
+                // Re-apply 'selected' class if this card was selected
+                if (card.card_id === selected_card.cardId) {
+                    cardDiv.classList.add('selected');
+                }
+
                 handEl.appendChild(cardDiv);
             });
         });
@@ -259,6 +277,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return { x: cx + (r * Math.cos(a)), y: cy + (r * Math.sin(a)) };
     }
 
+    // --- UI Interaction Functions ---
+    function handleCardClick(playerId, cardId, cardElement, state) {
+        // Deselect if the same card is clicked again
+        if (cardElement.classList.contains('selected')) {
+            clearSelection();
+        } else {
+            clearSelection(); // Clear previous selection
+            cardElement.classList.add('selected');
+            selected_card = { playerId, cardId };
+        }
+        updatePlayCardButton(state); // Update button state immediately
+    }
+
+    function clearSelection() {
+        const selectedElements = document.querySelectorAll('.card.selected');
+        selectedElements.forEach(el => el.classList.remove('selected'));
+        selected_card = { playerId: null, cardId: null };
+    }
+
+    function updatePlayCardButton(state) {
+        const canPlay = state.current_phase === 'PLACEMENT' &&
+                        selected_card.cardId !== null &&
+                        state.active_player_id === selected_card.playerId;
+        elements.playCardBtn.disabled = !canPlay;
+    }
+
     // --- Socket.IO Event Listeners ---
     socket.on('connect', () => {
         console.log('Connected to server!');
@@ -275,16 +319,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     socket.on('game_state_update', (state) => {
+        // When the state updates, clear the card selection if we're no longer in the placement phase.
+        if (state.current_phase !== 'PLACEMENT') {
+            clearSelection();
+        }
         updateUI(state);
         const isGameRunning = state.current_phase !== 'SETUP' && state.players && state.players.length > 0;
         const isGameOver = !!state.winner || (state.players && state.players.filter(p => !p.is_eliminated).length <= 1);
 
         elements.startGameBtn.disabled = isGameRunning;
         elements.nextPhaseBtn.disabled = !isGameRunning || isGameOver;
+        updatePlayCardButton(state);
     });
 
     // --- Control Button Event Listeners ---
     elements.startGameBtn.addEventListener('click', () => socket.emit('start_game'));
+    elements.playCardBtn.addEventListener('click', () => {
+        if (selected_card.cardId && selected_card.playerId) {
+            socket.emit('play_card', {
+                player_id: selected_card.playerId,
+                card_id: selected_card.cardId
+            });
+        }
+    });
     elements.nextPhaseBtn.addEventListener('click', () => socket.emit('next_phase'));
     elements.resetGameBtn.addEventListener('click', () => {
         socket.emit('reset_game');

@@ -92,6 +92,19 @@ def handle_start_game():
     game.run_next_phase()
     broadcast_game_state()
 
+@socketio.on('play_card')
+def handle_play_card(data):
+    """Handles a client's request to play a card."""
+    player_id = data.get('player_id')
+    card_id = data.get('card_id')
+    logging.info(f"Received 'play_card' event from player {player_id} for card {card_id}.")
+
+    if player_id and card_id:
+        game.play_card(player_id, card_id)
+        broadcast_game_state()
+    else:
+        logging.error(f"Received 'play_card' event with missing data: {data}")
+
 @socketio.on('next_phase')
 def handle_next_phase():
     """Handles the next phase event from a client."""

@@ -140,6 +140,46 @@ class Game:
         # Check for a winner after every phase.
         self._check_for_winner(self.game_state.current_turn, 10) # Assuming 10 rounds max for now
 
+    def play_card(self, player_id: str, card_id: str):
+        """
+        Handles a player's request to play a card from their hand.
+        Validates the action and, if successful, queues the card's effect.
+        """
+        player = self.game_state.get_player(player_id)
+        if not player:
+            logging.error(f"ACTION ERROR: Player {player_id} not found.")
+            return
+
+        if self.game_state.current_phase != "PLACEMENT":
+            story_logger.warning(f"{player.name} tried to play a card, but it's not the Placement Phase.")
+            return
+
+        card = player.find_card_in_hand(card_id)
+        if not card:
+            story_logger.warning(f"{player.name} tried to play card {card_id}, but it's not in their hand.")
+            return
+
+        if not card.effect:
+            story_logger.warning(f"{player.name} tried to play {card.name}, but it has no playable effect.")
+            return
+
+        story_logger.info(f"== {player.name} plays '{card.name}'! ==")
+
+        # Process the effect
+        self.effect_engine.queue_effect(card.effect, player)
+        self.effect_engine.resolve_effects()
+
+        # Move card from hand to the appropriate discard pile
+        player.hand.remove(card)
+        if card.card_type == 'basic':
+            self.game_state.basic_discard_pile.append(card)
+        elif card.card_type == 'function':
+            self.game_state.function_discard_pile.append(card)
+        else:
+            # A fallback for other card types, though they may not be intended to be played this way.
+            logging.warning(f"Card '{card.name}' has unhandled type '{card.card_type}', discarding to basic pile.")
+            self.game_state.basic_discard_pile.append(card)
+
     def _check_for_winner(self, current_round: int, max_rounds: int) -> Player | None:
         """
         Checks for victory conditions. The game can end in one of three ways:
