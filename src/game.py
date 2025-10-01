@@ -44,10 +44,25 @@ class Game:
         self.player_names = player_names
         self.loader = GameLoader(Path(assets_path_str))
         self.effect_engine = EffectEngine(self.game_state)
+        self.phases = [
+            ("TIME", lambda: time_phase.execute(self.game_state, self)),
+            ("PLACEMENT", lambda: placement_phase.execute(self.game_state)),
+            ("MOVEMENT", lambda: movement_phase.execute(self)),
+            ("INTERPRETATION", lambda: interpretation_phase.execute(self)),
+            ("RESOLUTION", lambda: resolution_phase.execute(self)),
+            ("UPKEEP", lambda: upkeep_phase.execute(self)),
+        ]
+        self.phase_index = 0
+
 
     def setup(self, test_cards: List[str] = None):
         """Initializes the game state, with an option to inject specific test cards."""
         logging.info("--- Setting up a new game of Tianji Bian ---")
+        story_logger.info("--- Setting up a new game of Tianji Bian ---")
+
+        # Reset game state for a new game
+        self.game_state = GameState()
+        self.phase_index = 0
 
         all_decks = self.loader.load_all_cards()
         self.game_state.basic_deck = all_decks.get("basic", [])
@@ -93,82 +108,68 @@ class Game:
                     break
                 player.add_card_to_hand(self.game_state.basic_deck.pop())
 
+        self.game_state.current_phase = "SETUP"
         story_logger.info("Game setup is complete. Players and cards are ready.")
 
-    def run_game(self, num_rounds: int = 10):
-        """Runs the main game loop for a specified number of rounds."""
-        story_logger.info(f"\n--- Starting Game Simulation (up to {num_rounds} rounds) ---")
-        logging.info(f"--- Starting Game Run ({num_rounds} round(s)) ---")
+    def run_next_phase(self):
+        """Executes the next phase of the game."""
+        if self.game_state.winner or len(self.active_players) <= 1:
+            story_logger.info("Game has ended. No more phases will be run.")
+            if not self.game_state.winner:
+                self._check_for_winner(10, 10)  # Force end-game check
+            return
 
-        winner = None
-        for i in range(1, num_rounds + 1):
-            self.run_round(i)
+        # Check if it's the start of a new round
+        if self.phase_index == 0:
+            self.game_state.current_turn += 1
+            story_logger.info(f"\n***** Round {self.game_state.current_turn} *****")
+            self._resolve_delayed_effects("NEXT_TURN_START")
 
-            winner = self._check_for_winner(i, num_rounds)
-            if winner:
-                break
+        # Get the current phase
+        phase_name, phase_method = self.phases[self.phase_index]
+        self.game_state.current_phase = phase_name
 
-        if not winner:
-             winner = self._check_for_winner(num_rounds, num_rounds)
+        # Execute the phase logic
+        story_logger.info(f"\n--- Starting {phase_name} Phase ---")
+        if phase_name.upper() in self.game_state.skipped_phases:
+            story_logger.info(f"--- Skipping {phase_name} Phase (Effect active) ---")
+        else:
+            phase_method()
 
-        story_logger.info("\n--- Simulation Finished ---")
-        if not winner and len(self.active_players) > 1:
-            story_logger.info("The game ended in a draw based on the rules.")
+        # Advance to the next phase, or loop back to the start of the next round
+        self.phase_index = (self.phase_index + 1) % len(self.phases)
 
-        story_logger.info("Final Player States:")
-        for player in self.game_state.players:
-            story_logger.info(f"  - {player}")
-        logging.info("--- Game Run Finished ---")
+        # Check for a winner at the end of each phase
+        self._check_for_winner(self.game_state.current_turn, 10) # Assuming 10 rounds max for now
 
     def _check_for_winner(self, current_round: int, max_rounds: int) -> Player | None:
         """Checks for victory conditions and returns the winner if one is found."""
+        if self.game_state.winner:  # If winner is already declared, do nothing.
+            return self.game_state.winner
+
+        winner = None
         if len(self.active_players) == 1:
             winner = self.active_players[0]
             story_logger.info(f"\n!!! VICTORY: {winner.name} is the last player standing! !!!")
-            return winner
-
-        if len(self.active_players) == 0:
+        elif len(self.active_players) == 0:
             story_logger.info("\n!!! DRAW: All players have been eliminated. !!!")
+            self.game_state.winner = "DRAW"
             return None
-
-        if current_round >= max_rounds:
+        # Check only at the end of a full round (when phase_index is 0)
+        elif current_round >= max_rounds and self.phase_index == 0:
             story_logger.info(f"\n--- Game has reached the round limit of {max_rounds}. Calculating winner by wealth... ---")
             potential_winners = sorted(self.active_players, key=lambda p: (p.gold, p.health), reverse=True)
             if not potential_winners:
-                 story_logger.info("\n!!! DRAW: No active players left to determine a winner. !!!")
-                 return None
+                story_logger.info("\n!!! DRAW: No active players left to determine a winner. !!!")
+                self.game_state.winner = "DRAW"
+                return None
             winner = potential_winners[0]
             story_logger.info(f"  - {winner.name} has the most wealth (Gold: {winner.gold}, Health: {winner.health}).")
             story_logger.info(f"\n!!! VICTORY: {winner.name} wins by having the most wealth! !!!")
-            return winner
 
-        return None
-
-    def run_round(self, round_number: int):
-        """Executes all phases for a single round of the game."""
-        if len(self.active_players) <= 1:
-            story_logger.info("Not enough active players to continue. Ending game.")
-            return
-
-        self.game_state.current_turn = round_number
-        story_logger.info(f"\n***** Round {self.game_state.current_turn} *****")
-
-        self._resolve_delayed_effects("NEXT_TURN_START")
-
-        phases = [
-            ("TIME", lambda: time_phase.execute(self.game_state, self)),
-            ("PLACEMENT", lambda: placement_phase.execute(self.game_state)),
-            ("MOVEMENT", lambda: movement_phase.execute(self)),
-            ("INTERPRETATION", lambda: interpretation_phase.execute(self)),
-            ("RESOLUTION", lambda: resolution_phase.execute(self)),
-            ("UPKEEP", lambda: upkeep_phase.execute(self)),
-        ]
-
-        for phase_name, phase_method in phases:
-            if phase_name.upper() in self.game_state.skipped_phases:
-                story_logger.info(f"\n--- Skipping {phase_name} Phase (Effect active) ---")
-                continue
-            phase_method()
+        if winner:
+            self.game_state.winner = winner
+        return winner
 
     def _resolve_delayed_effects(self, trigger_moment: str):
         """Resolves any delayed effects that match the current game moment."""

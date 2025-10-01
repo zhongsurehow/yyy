@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
         player2Gold: document.getElementById('player2-gold'),
         player2Position: document.getElementById('player2-position'),
         player2Indicator: document.getElementById('player2-indicator'),
+        player1Hand: document.getElementById('player1-hand'),
+        player2Hand: document.getElementById('player2-hand'),
         piecesGroup: document.getElementById('player-pieces'),
         juInfo: document.getElementById('ju-info'),
         turnInfo: document.getElementById('turn-info'),
@@ -49,11 +51,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUI(state) {
         console.log("Received game state update:", state);
 
-        if (!state || !state.players) {
+        if (!state || !state.players || !state.game_board) {
             console.warn("Incomplete state received, skipping UI update.");
             return;
         }
-
         // Update Player Panels
         state.players.forEach(player => {
             const id = player.player_id;
@@ -64,13 +65,25 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(`player${id}-indicator`).style.opacity = player.player_id === state.active_player_id ? '1' : '0.3';
 
             const zone = state.game_board.zones[player.position];
-            document.getElementById(`player${id}-position`).textContent = zone ? `${zone.palace}-${zone.department}` : '-';
+            const positionText = zone ? `${zone.palace.toUpperCase()}-${zone.department.toUpperCase()}` : '-';
+            document.getElementById(`player${id}-position`).textContent = positionText;
+
+            // Update player hand
+            const handEl = document.getElementById(`player${id}-hand`);
+            handEl.innerHTML = '';
+            player.hand.forEach(card => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'card';
+                cardDiv.textContent = card.name;
+                cardDiv.title = card.description;
+                handEl.appendChild(cardDiv);
+            });
         });
 
         // Update Player Pieces on Board
         elements.piecesGroup.innerHTML = ''; // Clear old pieces
         state.players.forEach(player => {
-            if (player.position && player.position !== 'None' && mapData.zones[player.position]) {
+            if (player.position && player.position !== 'None' && mapData.zones[player.position] && !player.is_eliminated) {
                 const center = mapData.zones[player.position].center;
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 circle.setAttribute('cx', center.x);
@@ -83,28 +96,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Game Info
         const dunText = state.dun_type === "YANG" ? "阳遁" : "阴遁";
-        const juNumber = state.game_board.qimen_gates ? Object.keys(state.game_board.qimen_gates).length > 0 ? state.game_board.qimen_gates.ju_number : '?' : '?'; // Simplified ju_number for display
         elements.juInfo.textContent = `${state.solar_term || '未知节气'} | ${dunText} | ${state.current_celestial_stem ? state.current_celestial_stem.name + state.current_terrestrial_branch.name : ''}`;
         elements.turnInfo.textContent = `回合: ${state.current_turn}`;
         elements.phaseInfo.textContent = `阶段: ${state.current_phase}`;
 
         // Update Log
-        if (state.log_message) {
-            const logEntry = document.createElement('p');
-            logEntry.className = 'log-message';
-            if (state.log_message.includes('VICTORY')) {
-                logEntry.classList.add('victory');
-            } else if (state.log_message.includes('error')) {
-                logEntry.classList.add('error');
-            }
-            logEntry.textContent = state.log_message;
-            elements.logMessages.appendChild(logEntry);
+        elements.logMessages.innerHTML = ''; // Clear old logs
+        if (state.log_messages && state.log_messages.length > 0) {
+            state.log_messages.forEach(msg => {
+                const logEntry = document.createElement('p');
+                logEntry.className = 'log-message';
+                if (msg.includes('VICTORY') || msg.includes('wins')) {
+                    logEntry.classList.add('victory');
+                } else if (msg.includes('ELIMINATED')) {
+                    logEntry.classList.add('elimination');
+                } else if (msg.includes('error') || msg.includes('ERROR')) {
+                    logEntry.classList.add('error');
+                }
+                logEntry.textContent = msg;
+                elements.logMessages.appendChild(logEntry);
+            });
             elements.logMessages.scrollTop = elements.logMessages.scrollHeight;
         }
 
         // Update Qi Men Gates
         if (state.game_board && state.game_board.qimen_gates) {
             updateQimenGates(state.game_board.qimen_gates);
+        }
+
+        // Handle Winner Display
+        if (state.winner) {
+            let winnerMessage = "";
+            if (state.winner === "DRAW") {
+                winnerMessage = "游戏结束：平局！";
+            } else {
+                winnerMessage = `游戏结束：${state.winner.name} 获胜!`;
+            }
+            const winnerOverlay = document.createElement('div');
+            winnerOverlay.className = 'winner-overlay';
+            winnerOverlay.textContent = winnerMessage;
+            document.body.appendChild(winnerOverlay);
+        } else {
+            // Remove winner overlay if it exists and game is reset
+            const overlay = document.querySelector('.winner-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
         }
     }
 
@@ -198,7 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Socket.IO Event Listeners ---
-    socket.on('connect', () => console.log('Connected to server!'));
+    socket.on('connect', () => {
+        console.log('Connected to server!');
+        socket.emit('request_initial_state');
+    });
     socket.on('disconnect', () => console.log('Disconnected from server.'));
     socket.on('error', (data) => {
         console.error('Server Error:', data.message);
@@ -211,8 +251,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     socket.on('game_state_update', (state) => {
         updateUI(state);
-        elements.startGameBtn.disabled = state.current_phase !== 'SETUP' && state.players && state.players.length > 0;
-        elements.nextPhaseBtn.disabled = state.current_phase === 'SETUP' || (state.players && state.players.filter(p => !p.is_eliminated).length <= 1);
+        const isGameRunning = state.current_phase !== 'SETUP' && state.players && state.players.length > 0;
+        const isGameOver = !!state.winner || (state.players && state.players.filter(p => !p.is_eliminated).length <= 1);
+
+        elements.startGameBtn.disabled = isGameRunning;
+        elements.nextPhaseBtn.disabled = !isGameRunning || isGameOver;
     });
 
     // --- Control Button Event Listeners ---
@@ -220,7 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.nextPhaseBtn.addEventListener('click', () => socket.emit('next_phase'));
     elements.resetGameBtn.addEventListener('click', () => {
         socket.emit('reset_game');
-        elements.logMessages.innerHTML = ''; // Clear logs on reset
+        // No need to clear logs here, the updateUI function will handle it.
+        const overlay = document.querySelector('.winner-overlay');
+        if (overlay) overlay.remove();
     });
 
     // --- Initial Load ---

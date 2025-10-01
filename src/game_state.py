@@ -31,10 +31,12 @@ class GameState:
     current_celestial_stem: Card | None = None
     current_terrestrial_branch: Card | None = None
     solar_term_index: int = 0
-    current_turn: int = 1
+    current_turn: int = 0
     current_phase: str = "SETUP" # e.g., SETUP, TIME, PLACEMENT, MOVEMENT, etc.
     active_player_index: int = 0
     starting_player_index: int = 0  # Track which player started the current Ju
+    winner: Any = None # Can be a Player object or "DRAW"
+    log_messages: List[str] = field(default_factory=list)
 
     @property
     def current_solar_term(self) -> SolarTerm:
@@ -93,15 +95,25 @@ class GameState:
 
     def to_dict(self) -> Dict[str, Any]:
         """Serializes the entire GameState object to a dictionary."""
+        active_player = self.get_active_player() if self.players else None
+        winner_dict = None
+        if self.winner:
+            if isinstance(self.winner, Player):
+                winner_dict = self.winner.to_dict()
+            else: # Draw
+                winner_dict = self.winner
+
         return {
             "players": [p.to_dict() for p in self.players],
             "game_board": self.game_board.to_dict(),
             "current_turn": self.current_turn,
             "current_phase": self.current_phase,
-            "active_player_id": self.get_active_player().player_id,
+            "active_player_id": active_player.player_id if active_player else None,
             "solar_term": self.current_solar_term.name,
-            "dun_type": self.dun_type,
+            "dun_type": self.dun_type.value,
             "game_fund": self.game_fund,
             "current_celestial_stem": self.current_celestial_stem.to_dict() if self.current_celestial_stem else None,
             "current_terrestrial_branch": self.current_terrestrial_branch.to_dict() if self.current_terrestrial_branch else None,
+            "log_messages": self.log_messages,
+            "winner": winner_dict,
         }

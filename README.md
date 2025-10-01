@@ -1,8 +1,8 @@
-# Tianji Bian - Game Engine Prototype (天机变)
+# Tianji Bian - Web Application (天机变)
 
-Welcome to the Tianji Bian game engine prototype. This project is a Python-based simulation of a board game inspired by ancient Chinese metaphysics, including the I Ching (易经), Qi Men Dun Jia (奇门遁甲), and the Five Elements (五行).
+Welcome to the Tianji Bian web application. This project is a Python-based, interactive web version of a board game inspired by ancient Chinese metaphysics, including the I Ching (易经), Qi Men Dun Jia (奇门遁甲), and the Five Elements (五行).
 
-The current focus of this prototype is to provide a clear and educational simulation of the game's core mechanics, making it an excellent tool for learning how to play.
+The application provides a fully playable two-person game, rendering the complex mechanics of the game in a user-friendly, browser-based interface.
 
 ## Features
 
@@ -10,7 +10,9 @@ The current focus of this prototype is to provide a clear and educational simula
 - **Dynamic Game Board**: The board state changes each round based on the shifting celestial energies (Stems and Branches).
 - **Qi Men Dun Jia Integration**: The auspicious and inauspicious nature of different locations is determined by the shifting Qi Men gates, which are calculated based on the in-game solar term.
 - **Card-driven Actions**: Players use cards from their hands to trigger effects, engage in duels, and influence the game.
-- **Tutorial-focused Simulation**: The simulation includes an intelligent AI that makes strategic decisions and a narrative logger that explains the reasoning behind those decisions, helping new players understand the game's flow and strategy.
+- **Web-based Interactive Game**: Play the game directly in your browser with a full graphical interface and real-time updates.
+- **Phase-by-Phase Control**: Step through the game's phases at your own pace, making it easy to learn the rules and strategies.
+- **Detailed Game Log**: A comprehensive log tracks every action and event, providing a clear narrative of the game's progression.
 
 ## Getting Started
 
@@ -33,15 +35,19 @@ The current focus of this prototype is to provide a clear and educational simula
     pip install -r requirements.txt
     ```
 
-### How to Run the Simulation
+### How to Run the Web Application
 
-To run the tutorial simulation, execute the `main.py` script from the root directory:
+To run the web application, execute the `server.py` script from the root directory:
 
 ```bash
-python main.py
+python server.py
 ```
 
-This will start a two-player, one-round simulation and print a detailed narrative of the game's events to the console.
+This will start the web server. You can then access the game by opening your web browser and navigating to:
+
+**http://127.0.0.1:5000**
+
+You can start, play, and reset the game using the controls on the web page.
 
 ### How to Run Tests
 
