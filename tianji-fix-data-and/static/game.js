@@ -175,28 +175,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const qimenRadius = (mapData.departments[2].outerRadius + mapData.departments[1].outerRadius) / 2;
 
         for (const palaceId in gates) {
-            if (palaceId === 'ju_number') continue; // Skip the ju_number property
-            const gateSymbol = gates[palaceId];
+            const gateData = gates[palaceId];
             const palace = mapData.palaces.find(p => p.id === palaceId);
             if (palace) {
                 const centerAngle = palace.angle + 22.5;
                 const center = polarToCartesian(mapData.center.x, mapData.center.y, qimenRadius, centerAngle);
 
                 const doorGroup = document.createElementNS(svgNS, 'g');
-                doorGroup.setAttribute('class', 'qimen-door');
+                // Add a class based on the gate's type for styling
+                doorGroup.setAttribute('class', `qimen-door gate-${gateData.type.toLowerCase()}`);
+
                 const circle = document.createElementNS(svgNS, 'circle');
                 circle.setAttribute('cx', center.x);
                 circle.setAttribute('cy', center.y);
-                circle.setAttribute('r', 25);
+                circle.setAttribute('r', 28); // Slightly larger to accommodate text
                 circle.setAttribute('class', 'door-circle');
                 doorGroup.appendChild(circle);
 
-                const symbol = document.createElementNS(svgNS, 'text');
-                symbol.setAttribute('x', center.x);
-                symbol.setAttribute('y', center.y);
-                symbol.setAttribute('class', 'door-text');
-                symbol.textContent = gateSymbol;
-                doorGroup.appendChild(symbol);
+                const nameText = document.createElementNS(svgNS, 'text');
+                nameText.setAttribute('x', center.x);
+                nameText.setAttribute('y', center.y);
+                nameText.setAttribute('class', 'door-text');
+                nameText.textContent = gateData.name;
+                doorGroup.appendChild(nameText);
                 elements.qimenDoorsGroup.appendChild(doorGroup);
             }
         }

@@ -1,0 +1,13 @@
+# Log files
+*.log
+server.log
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
+
+# Temporary verification files
+jules-scratch/

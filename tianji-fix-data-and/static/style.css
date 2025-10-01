@@ -38,8 +38,28 @@ h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; bord
 .current-player { animation: pulse 2s infinite; }
 @keyframes pulse { 0% { filter: drop-shadow(0 0 5px currentColor); } 50% { filter: drop-shadow(0 0 20px currentColor); } 100% { filter: drop-shadow(0 0 5px currentColor); } }
 .qimen-door { pointer-events: none; }
-.door-circle { fill: rgba(255, 255, 255, 0.95); stroke: #4ecdc4; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(78, 205, 196, 0.6)); }
-.door-text { font-size: 23px; font-weight: bold; fill: #2c3e50; text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: 'KaiTi', 'SimSun', serif; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); }
+.door-circle { fill: rgba(255, 255, 255, 0.95); stroke: #aaa; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(170, 170, 170, 0.6)); }
+.door-text { font-size: 23px; font-weight: bold; fill: #333; text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: 'KaiTi', 'SimSun', serif; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); }
+
+/* Styling for Auspicious Qi Men Gates */
+.gate-auspicious .door-circle {
+    stroke: #2ecc71; /* Green for good fortune */
+    filter: drop-shadow(0 0 12px rgba(46, 204, 113, 0.7));
+}
+.gate-auspicious .door-text {
+    fill: #1e4620;
+}
+
+/* Styling for Inauspicious Qi Men Gates */
+.gate-inauspicious .door-circle {
+    stroke: #e74c3c; /* Red for danger */
+    fill: rgba(200, 200, 200, 0.8);
+    filter: drop-shadow(0 0 12px rgba(231, 76, 60, 0.7));
+}
+.gate-inauspicious .door-text {
+    fill: #5d211b;
+}
+
 .info-bar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: center; z-index: 1000; gap: 10px; }
 .info-bar > div { background: rgba(0, 0, 0, 0.7); color: white; padding: 8px 12px; border-radius: 8px; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); text-align: center; flex-shrink: 0; }
 .celestial-cards-info { padding: 15px; }

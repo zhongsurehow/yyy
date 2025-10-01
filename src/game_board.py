@@ -1,5 +1,7 @@
+import logging
 from dataclasses import dataclass, field
 from typing import List, Dict, Any
+from . import qimen as qm
 
 # Defines the circular adjacency of the eight palaces (Ba Gua)
 PALACE_ADJACENCY = {
@@ -138,8 +140,20 @@ class GameBoard:
         return [move for move in valid_moves if move in self.zones]
 
     def to_dict(self) -> Dict[str, Any]:
-        """Serializes the GameBoard object to a dictionary."""
+        """Serializes the GameBoard object to a dictionary with detailed gate info."""
+        detailed_gates = {}
+        for palace_id, gate_symbol in self.qimen_gates.items():
+            # The layout sometimes includes the Ju number, which we can skip.
+            if palace_id == 'ju_number':
+                continue
+            gate_info = qm.GATE_EFFECTS.get(gate_symbol, {})
+            detailed_gates[palace_id] = {
+                "symbol": gate_symbol,
+                "name": gate_info.get("name", "Unknown Gate"),
+                "type": gate_info.get("type", "Neutral")
+            }
+
         return {
             "zones": {zone_id: zone.to_dict() for zone_id, zone in self.zones.items()},
-            "qimen_gates": self.qimen_gates,
+            "qimen_gates": detailed_gates,
         }

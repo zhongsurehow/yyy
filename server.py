@@ -112,5 +112,6 @@ def handle_reset_game():
 
 if __name__ == '__main__':
     logging.info("Starting Tianji Bian server with Eventlet...")
-    # host='0.0.0.0' makes the server accessible from the local network
+    # The socketio.run function will use the eventlet server automatically
+    # because of the async_mode='eventlet' argument in the SocketIO constructor.
     socketio.run(app, host='0.0.0.0', port=5000)
