@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
         juInfo: document.getElementById('ju-info'),
         turnInfo: document.getElementById('turn-info'),
         phaseInfo: document.getElementById('phase-info'),
+        gameFundInfo: document.getElementById('game-fund-info'),
+        celestialStemCardName: document.querySelector('#celestial-stem-card .card-name'),
+        celestialBranchCardName: document.querySelector('#celestial-branch-card .card-name'),
         logMessages: document.getElementById('log-messages'),
         qimenDoorsGroup: document.getElementById('qimen-doors'),
     };
@@ -96,9 +99,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update Game Info
         const dunText = state.dun_type === "YANG" ? "阳遁" : "阴遁";
-        elements.juInfo.textContent = `${state.solar_term || '未知节气'} | ${dunText} | ${state.current_celestial_stem ? state.current_celestial_stem.name + state.current_terrestrial_branch.name : ''}`;
+        elements.juInfo.textContent = `${state.solar_term || '未知节气'} | ${dunText}`;
         elements.turnInfo.textContent = `回合: ${state.current_turn}`;
         elements.phaseInfo.textContent = `阶段: ${state.current_phase}`;
+        elements.gameFundInfo.textContent = `奖金池: ${state.game_fund}`;
+
+        // Update Celestial Cards Panel
+        const stemCard = state.current_celestial_stem;
+        const branchCard = state.current_terrestrial_branch;
+
+        if (stemCard) {
+            elements.celestialStemCardName.textContent = stemCard.name;
+            elements.celestialStemCardName.parentElement.title = stemCard.description;
+        } else {
+            elements.celestialStemCardName.textContent = '-';
+            elements.celestialStemCardName.parentElement.title = '';
+        }
+
+        if (branchCard) {
+            elements.celestialBranchCardName.textContent = branchCard.name;
+            elements.celestialBranchCardName.parentElement.title = branchCard.description;
+        } else {
+            elements.celestialBranchCardName.textContent = '-';
+            elements.celestialBranchCardName.parentElement.title = '';
+        }
 
         // Update Log
         elements.logMessages.innerHTML = ''; // Clear old logs

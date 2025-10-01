@@ -67,24 +67,6 @@ class GameState:
         """Returns the player whose turn it is."""
         return self.players[self.active_player_index]
 
-    def advance_to_next_player(self):
-        """
-        Advances the turn to the next player.
-        When a full cycle of players completes, advances the solar term.
-        """
-        self.active_player_index = (self.active_player_index + 1) % len(self.players)
-        
-        # Always increment turn when we complete a full player cycle
-        if self.active_player_index == 0:
-            self.current_turn += 1
-            logging.info(f"--- Starting Round {self.current_turn} ---")
-
-        # Check if we've completed a full cycle of starting players
-        if self.active_player_index == self.starting_player_index:
-            # A full round of play has passed, advance to the next solar term
-            self.solar_term_index = (self.solar_term_index + 1) % len(SOLAR_TERMS_CYCLE)
-            logging.info(f"*** New Solar Term: {self.current_solar_term.name} ({self.dun_type} Dun). Qi Men Gates will shift. ***")
-
     def set_phase(self, phase_name: str):
         """Sets the current game phase."""
         self.current_phase = phase_name

@@ -11,9 +11,12 @@
     <div class="container">
         <div class="game-area">
             <div class="game-board-container">
-                <div class="ju-info" id="ju-info">等待游戏开始...</div>
-                <div class="turn-info" id="turn-info">回合: 0</div>
-                <div class="phase-info" id="phase-info">阶段: 等待开始</div>
+                <div class="info-bar">
+                    <div class="ju-info" id="ju-info">等待游戏开始...</div>
+                    <div class="turn-info" id="turn-info">回合: 0</div>
+                    <div class="phase-info" id="phase-info">阶段: 等待开始</div>
+                    <div class="game-fund-info" id="game-fund-info">奖金池: ?</div>
+                </div>
 
                 <svg id="game-board" viewBox="0 0 800 800">
                     <g id="di-ring" class="ring-group"></g>
@@ -39,6 +42,17 @@
             </div>
         </div>
         <div class="sidebar">
+            <div class="panel celestial-cards-info">
+                <h2>天时</h2>
+                <div class="celestial-card" id="celestial-stem-card">
+                    <span class="card-label">天干:</span>
+                    <span class="card-name">-</span>
+                </div>
+                <div class="celestial-card" id="celestial-branch-card">
+                    <span class="card-label">地支:</span>
+                    <span class="card-name">-</span>
+                </div>
+            </div>
             <div class="panel player-info">
                 <div class="player-card player-1">
                     <div class="player-name" id="player1-name">玩家一</div>

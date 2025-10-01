@@ -12,12 +12,17 @@ button:disabled { background: #666; cursor: not-allowed; transform: none; box-sh
 .sidebar { display: flex; flex-direction: column; gap: 20px; }
 .panel { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); overflow: hidden; }
 .player-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.player-card { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); padding: 15px; border-radius: 10px; border-left: 4px solid; }
+.player-card { background: linear-gradient(135deg, rgba(44, 62, 80, 0.8) 0%, rgba(52, 73, 94, 0.8) 100%); padding: 15px; border-radius: 10px; border-left: 4px solid; display: flex; flex-direction: column;}
 .player-1 { border-left-color: #e74c3c; }
 .player-2 { border-left-color: #3498db; }
 .player-name { font-size: 18px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .player-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; }
 .stat { display: flex; justify-content: space-between; padding: 4px 0; }
+.player-hand-container { margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.player-hand-container h4 { font-size: 16px; margin-bottom: 10px; text-align: center; color: #bde0fe; }
+.player-hand { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.card { background: #4a4e69; color: #f2e9e4; padding: 6px 10px; border-radius: 5px; font-size: 13px; border: 1px solid #9a8c98; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: help; transition: all 0.2s ease-in-out; text-align: center; }
+.card:hover { transform: translateY(-2px); background: #6b6392; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; border-bottom: 2px solid rgba(255, 255, 255, 0.2); padding-bottom: 10px; }
 .zone { stroke: #6b4f3a; stroke-width: 4; cursor: pointer; transition: all 0.3s ease-in-out; }
 .gong-li   { fill: #c0392b; } .gong-kun  { fill: #f1c40f; } .gong-dui  { fill: #bdc3c7; } .gong-qian { fill: #ecf0f1; } .gong-kan  { fill: #2c3e50; } .gong-gen  { fill: #d3a47c; } .gong-zhen { fill: #27ae60; } .gong-xun  { fill: #2ecc71; }
@@ -35,10 +40,12 @@ h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; bord
 .qimen-door { pointer-events: none; }
 .door-circle { fill: rgba(255, 255, 255, 0.95); stroke: #4ecdc4; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(78, 205, 196, 0.6)); }
 .door-text { font-size: 23px; font-weight: bold; fill: #2c3e50; text-anchor: middle; dominant-baseline: central; pointer-events: none; font-family: 'KaiTi', 'SimSun', serif; filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.8)); }
-.ju-info { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
-.turn-info { position: absolute; top: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
-.phase-info { position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 14px; z-index: 1000; }
-.player-status { position: absolute; bottom: 10px; left: 10px; background: rgba(0, 0, 0, 0.7); color: white; padding: 10px; border-radius: 5px; font-size: 12px; z-index: 1000; max-width: 300px; }
+.info-bar { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: center; z-index: 1000; gap: 10px; }
+.info-bar > div { background: rgba(0, 0, 0, 0.7); color: white; padding: 8px 12px; border-radius: 8px; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); text-align: center; flex-shrink: 0; }
+.celestial-cards-info { padding: 15px; }
+.celestial-card { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: rgba(255, 255, 255, 0.08); border-radius: 6px; margin-bottom: 8px; font-size: 15px; cursor: help; }
+.celestial-card .card-label { font-weight: bold; color: #a2d2ff; margin-right: 10px; }
+.celestial-card .card-name { font-weight: bold; color: #f2e9e4; }
 .log-panel { flex-grow: 1; display: flex; flex-direction: column; }
 #log-messages { flex-grow: 1; background: rgba(0, 0, 0, 0.3); border-radius: 8px; padding: 15px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.6; color: #a2d2ff; border: 1px solid rgba(255, 255, 255, 0.1); }
 #log-messages p { margin-bottom: 5px; }
@@ -46,3 +53,5 @@ h2 { color: #fff; margin-bottom: 15px; font-size: 20px; text-align: center; bord
 .log-message { border-bottom: 1px solid rgba(162, 210, 255, 0.2); padding-bottom: 5px; margin-bottom: 5px; }
 .log-message.error { color: #ff6b6b; font-weight: bold; }
 .log-message.victory { color: #50fa7b; font-weight: bold; font-size: 16px; text-align: center; }
+.log-message.elimination { color: #ff8fa3; font-style: italic; }
+.winner-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); color: #50fa7b; font-size: 48px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 9999; text-shadow: 0 0 20px #50fa7b; }

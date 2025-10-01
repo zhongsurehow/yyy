@@ -31,6 +31,4 @@ def execute(game_instance):
     # Reset any round-specific states
     game_state.skipped_phases.clear()
     story_logger.info("  - Round-specific effects (like skipped phases) are now reset.")
-
-    game_state.advance_to_next_player()
-    story_logger.info(f"  - The turn passes to the next player: {game_state.get_active_player().name}.")
+    story_logger.info("  - The round concludes.")

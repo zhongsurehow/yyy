@@ -11,6 +11,7 @@ from .card import Card
 from .effect_engine import EffectEngine
 from . import five_elements as fe
 from . import qimen as qm
+from .solar_term import SOLAR_TERMS_CYCLE
 from .phases import (
     time_phase,
     placement_phase,
@@ -20,15 +21,9 @@ from .phases import (
     upkeep_phase,
 )
 
-# Setup a dedicated logger for the game's narrative story
+# Get the logger for the game's narrative story.
+# The configuration of this logger is handled in the main application entry point (e.g., server.py).
 story_logger = logging.getLogger("story_logger")
-story_logger.setLevel(logging.INFO)
-story_logger.propagate = False
-if not story_logger.handlers:
-    handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(message)s')
-    handler.setFormatter(formatter)
-    story_logger.addHandler(handler)
 
 
 class Game:
@@ -55,8 +50,8 @@ class Game:
         self.phase_index = 0
 
 
-    def setup(self, test_cards: List[str] = None):
-        """Initializes the game state, with an option to inject specific test cards."""
+    def setup(self):
+        """Initializes the game state."""
         logging.info("--- Setting up a new game of Tianji Bian ---")
         story_logger.info("--- Setting up a new game of Tianji Bian ---")
 
@@ -91,15 +86,6 @@ class Game:
         if ren_zones and len(self.game_state.players) > 2:
              self.game_state.players[2].position = ren_zones[1]
 
-        if test_cards:
-            for i, player in enumerate(self.game_state.players):
-                if i < len(test_cards):
-                    card_id_to_find = test_cards[i]
-                    test_card = next((c for c in self.game_state.basic_deck if c.card_id == card_id_to_find), None)
-                    if test_card:
-                        player.add_card_to_hand(test_card)
-                        self.game_state.basic_deck.remove(test_card)
-
         for player in self.game_state.players:
             while len(player.hand) < 7:
                 self._reshuffle_if_needed('basic')
@@ -123,6 +109,14 @@ class Game:
         if self.phase_index == 0:
             self.game_state.current_turn += 1
             story_logger.info(f"\n***** Round {self.game_state.current_turn} *****")
+
+            # A full round of play has passed, advance to the next solar term
+            if self.game_state.current_turn > 1: # Don't advance on the first round's start
+                self.game_state.solar_term_index = (self.game_state.solar_term_index + 1) % len(SOLAR_TERMS_CYCLE)
+                story_logger.info(f"*** New Solar Term: {self.game_state.current_solar_term.name} ({self.game_state.dun_type.value} Dun). ***")
+                # The Qi Men gates shift with the new solar term
+                self._update_qimen_gates()
+
             self._resolve_delayed_effects("NEXT_TURN_START")
 
         # Get the current phase
