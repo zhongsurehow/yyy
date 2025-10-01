@@ -10,7 +10,11 @@ from . import qimen as qm
 story_logger = logging.getLogger("story_logger")
 
 def choose_best_move(game_state: GameState, player: Player, valid_moves: List[str]) -> str:
-    """A simple AI to choose the best move for a player."""
+    """
+    A simple AI to choose the best move for a player.
+    It evaluates each valid move based on a simple scoring system and
+    logs its reasoning.
+    """
     move_scores = {}
 
     story_logger.info(f"  - {player.name} (at {player.position}) considers where to move.")
@@ -26,6 +30,8 @@ def choose_best_move(game_state: GameState, player: Player, valid_moves: List[st
         gate_name_for_log = gate_data.get("name")
         reasoning = []
 
+        # --- Scoring Logic ---
+        # 1. Evaluate based on the zone's department (Tian, Di)
         if zone.department == 'tian':
             if zone.gold_reward > 0:
                 score += 5
@@ -41,6 +47,7 @@ def choose_best_move(game_state: GameState, player: Player, valid_moves: List[st
                 score += 3
                 reasoning.append("it's a Di zone with no penalty")
 
+        # 2. Evaluate based on the Qi Men gate's auspiciousness
         if gate_type == "Auspicious":
             score += 10
             reasoning.append(f"it has the auspicious '{gate_name_for_log}' gate")
@@ -48,6 +55,7 @@ def choose_best_move(game_state: GameState, player: Player, valid_moves: List[st
             score -= 10
             reasoning.append(f"it has the inauspicious '{gate_name_for_log}' gate")
 
+        # 3. Penalize moving to an occupied space to avoid conflict
         other_players = [p for p in game_state.players if p.position == move and not p.is_eliminated]
         if other_players:
             score -= 7 # Avoid conflict for this simple AI
@@ -57,6 +65,8 @@ def choose_best_move(game_state: GameState, player: Player, valid_moves: List[st
         if reasoning:
             story_logger.info(f"    - Considering {move}: {', '.join(reasoning)}. (Score: {score})")
 
+    # If no moves have a positive score, or if there's no clear best option,
+    # the AI might choose randomly. For simplicity, we just pick the highest score.
     if not move_scores:
         if not valid_moves: return None
         best_move = random.choice(valid_moves)

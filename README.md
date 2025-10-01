@@ -13,6 +13,17 @@ The application provides a fully playable two-person game, rendering the complex
 - **Web-based Interactive Game**: Play the game directly in your browser with a full graphical interface and real-time updates.
 - **Phase-by-Phase Control**: Step through the game's phases at your own pace, making it easy to learn the rules and strategies.
 - **Detailed Game Log**: A comprehensive log tracks every action and event, providing a clear narrative of the game's progression.
+- **Simulated AI Opponent**: The game includes a basic AI that makes strategic decisions, providing a challenging opponent for a two-player simulation.
+
+## Core Game Mechanics
+
+This engine fully simulates the cyclical nature of the game's core metaphysical systems:
+
+-   **24 Solar Terms (二十四节气)**: The game progresses through the 24 solar terms, from Winter Solstice (冬至) to Great Cold (大寒). Each full round of gameplay advances the solar term, changing the underlying energies of the board.
+
+-   **Yin & Yang Dun Cycles (阴阳遁)**: The system correctly determines whether the current solar term belongs to the Yang Dun (阳遁) or Yin Dun (阴遁) cycle. This is a critical factor in laying out the Qi Men plate.
+
+-   **Qi Men Ju Calculation (奇门局)**: Based on the current solar term and its Dun type, the engine automatically calculates the correct "Ju" (局), such as "Yang Dun, Ju 1" (阳遁一局) or "Yin Dun, Ju 8" (阴遁八局). This Ju number is then used to dynamically position the eight gates (八门) on the game board, ensuring the strategic landscape changes with each new round.
 
 ## Getting Started
 

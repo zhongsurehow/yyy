@@ -98,60 +98,72 @@ class Game:
         story_logger.info("Game setup is complete. Players and cards are ready.")
 
     def run_next_phase(self):
-        """Executes the next phase of the game."""
+        """
+        Executes the next phase of the game. This is the main engine that drives
+        the game forward, progressing from one phase to the next and handling
+        the start of new rounds.
+        """
+        # If a winner has been declared or only one player remains, end the game.
         if self.game_state.winner or len(self.active_players) <= 1:
             story_logger.info("Game has ended. No more phases will be run.")
             if not self.game_state.winner:
                 self._check_for_winner(10, 10)  # Force end-game check
             return
 
-        # Check if it's the start of a new round
+        # At the start of the phase cycle, begin a new round.
         if self.phase_index == 0:
             self.game_state.current_turn += 1
             story_logger.info(f"\n***** Round {self.game_state.current_turn} *****")
 
-            # A full round of play has passed, advance to the next solar term
-            if self.game_state.current_turn > 1: # Don't advance on the first round's start
+            # After the first round, advance the solar term and update the board.
+            if self.game_state.current_turn > 1:
                 self.game_state.solar_term_index = (self.game_state.solar_term_index + 1) % len(SOLAR_TERMS_CYCLE)
                 story_logger.info(f"*** New Solar Term: {self.game_state.current_solar_term.name} ({self.game_state.dun_type.value} Dun). ***")
-                # The Qi Men gates shift with the new solar term
                 self._update_qimen_gates()
 
+            # Resolve any effects that trigger at the start of a turn.
             self._resolve_delayed_effects("NEXT_TURN_START")
 
-        # Get the current phase
+        # Get and execute the current phase from the list.
         phase_name, phase_method = self.phases[self.phase_index]
         self.game_state.current_phase = phase_name
 
-        # Execute the phase logic
         story_logger.info(f"\n--- Starting {phase_name} Phase ---")
         if phase_name.upper() in self.game_state.skipped_phases:
             story_logger.info(f"--- Skipping {phase_name} Phase (Effect active) ---")
         else:
             phase_method()
 
-        # Advance to the next phase, or loop back to the start of the next round
+        # Advance the phase index, looping back to 0 after the last phase.
         self.phase_index = (self.phase_index + 1) % len(self.phases)
 
-        # Check for a winner at the end of each phase
+        # Check for a winner after every phase.
         self._check_for_winner(self.game_state.current_turn, 10) # Assuming 10 rounds max for now
 
     def _check_for_winner(self, current_round: int, max_rounds: int) -> Player | None:
-        """Checks for victory conditions and returns the winner if one is found."""
+        """
+        Checks for victory conditions. The game can end in one of three ways:
+        1. One player is left standing.
+        2. All players are eliminated (draw).
+        3. The round limit is reached (winner decided by wealth).
+        """
         if self.game_state.winner:  # If winner is already declared, do nothing.
             return self.game_state.winner
 
         winner = None
+        # 1. Last player standing
         if len(self.active_players) == 1:
             winner = self.active_players[0]
             story_logger.info(f"\n!!! VICTORY: {winner.name} is the last player standing! !!!")
+        # 2. All players eliminated
         elif len(self.active_players) == 0:
             story_logger.info("\n!!! DRAW: All players have been eliminated. !!!")
             self.game_state.winner = "DRAW"
             return None
-        # Check only at the end of a full round (when phase_index is 0)
+        # 3. Round limit reached (checked only at the end of a round)
         elif current_round >= max_rounds and self.phase_index == 0:
             story_logger.info(f"\n--- Game has reached the round limit of {max_rounds}. Calculating winner by wealth... ---")
+            # Sort players by gold, then by health, to find the wealthiest.
             potential_winners = sorted(self.active_players, key=lambda p: (p.gold, p.health), reverse=True)
             if not potential_winners:
                 story_logger.info("\n!!! DRAW: No active players left to determine a winner. !!!")
